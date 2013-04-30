@@ -1,0 +1,53 @@
+/(c).1/1.1/Mon Feb  7 07:44:03 2000//
+/COPYING/1.1/Mon Feb  7 07:44:03 2000//
+/INSTALL/1.1/Mon Feb  7 07:44:03 2000//
+/README/1.5/Mon Jan 28 10:19:57 2002//
+/TODO/1.1/Mon Feb  7 07:44:03 2000//
+/aclocal.m4/1.1/Fri Jan  3 08:51:56 2003//
+/conf.mk/1.4/Mon Jan 28 10:19:57 2002//
+/config.guess/1.3/Fri Jan  3 08:51:56 2003//
+/config.sub/1.3/Fri Jan  3 08:51:57 2003//
+/i_string.h/1.1/Mon Feb  7 07:45:11 2000//
+/install-sh/1.1/Mon Feb  7 07:44:03 2000//
+/ltmain.sh/1.1/Fri Jan  3 08:51:57 2003//
+/pobjt.h/1.2/Fri Jun 23 11:22:30 2000//
+/pstr.h/1.1/Mon Feb  7 07:45:11 2000//
+/put(c)/1.1/Mon Feb  7 07:44:03 2000//
+/ucsim.cc/1.3/Fri Jan  3 08:51:57 2003//
+D/avr.src////
+D/cmd.src////
+D/doc////
+D/gui.src////
+D/hc08.src////
+D/libltdl////
+D/s51.src////
+D/sim.src////
+D/xa.src////
+D/z80.src////
+/Makefile/1.15/Sat Jul 17 06:31:54 2004//
+/app.cc/1.2/Sat Jul 17 06:31:54 2004//
+/appcl.h/1.2/Sat Jul 17 06:31:54 2004//
+/clean.mk/1.7/Sat Jul 17 06:31:54 2004//
+/conf/1.3/Sat Jul 17 06:31:54 2004//
+/ddconfig_in.h/1.8/Sat Jul 17 06:31:56 2004//
+/error.cc/1.3/Sat Jul 17 06:31:56 2004//
+/eventcl.h/1.1/Fri Jul 16 16:36:33 2004//
+/globals.cc/1.7/Sat Jul 17 06:31:56 2004//
+/globals.h/1.4/Sat Jul 17 06:31:56 2004//
+/mkecho/1.3/Sat Jul 17 06:31:59 2004//
+/option.cc/1.2/Sat Jul 17 06:31:59 2004//
+/optioncl.h/1.2/Sat Jul 17 06:31:59 2004//
+/packages_in.mk/1.5/Sat Jul 17 06:31:59 2004//
+/pobj.cc/1.7/Sat Jul 17 06:31:59 2004//
+/pobjcl.h/1.4/Sat Jul 17 06:31:59 2004//
+/ptt.cc/1.1/Fri Jul 16 16:36:33 2004//
+/stypes.h/1.9/Sat Jul 17 06:31:59 2004//
+/utils.cc/1.5/Sat Jul 17 06:31:59 2004//
+/utils.h/1.4/Sat Jul 17 06:31:59 2004//
+/.version/1.13/Tue Jul 27 19:34:55 2004//
+/NEWS/1.5/Tue Jul 27 19:34:55 2004//
+/configure/1.21/Tue Jul 27 19:34:55 2004//
+/configure.in/1.19/Tue Jul 27 19:34:55 2004//
+/errorcl.h/1.4/Tue Jul 27 19:34:55 2004//
+/libtool/1.5/Tue Jul 27 19:34:55 2004//
+/main_in.mk/1.13/Tue Sep  7 17:44:29 2004//
