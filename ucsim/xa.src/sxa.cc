@@ -34,7 +34,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 // local
 #include "simxacl.h"
 
-
 int
 main(int argc, char *argv[])
 {

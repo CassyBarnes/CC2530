@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #line 2 "cmdlex.cc"
 
 #line 4 "cmdlex.cc"

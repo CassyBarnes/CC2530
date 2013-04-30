@@ -30,7 +30,7 @@ LIBS		= -lnsl  -L$(PRJDIR) -Wl,--start-group -lutil -lsim -lcmd -lguiucsim -Wl,-
 DL		= -ldl
 dl_ok		= yes
 
-prefix          = /usr/local
+prefix          = /home/calypso/Desktop/UCSIM_BIN
 exec_prefix     = ${prefix}
 bindir          = ${exec_prefix}/bin
 libdir          = ${exec_prefix}/lib

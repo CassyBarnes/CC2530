@@ -48,6 +48,8 @@ main(int argc, char *argv[])
   //class cl_app *app;
   class cl_sim *sim;
 
+  fprintf(stderr, "Hello from Calypso!\n");
+
   cpus= cpus_51;
   application= new cl_app();
   application->init(argc, argv);

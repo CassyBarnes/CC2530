@@ -309,7 +309,8 @@ cl_console::welcome(void)
 	  "uCsim comes with ABSOLUTELY NO WARRANTY; for details type "
 	  "`show w'.\n"
 	  "This is free software, and you are welcome to redistribute it\n"
-	  "under certain conditions; type `show c' for details.\n",
+	  "under certain conditions; type `show c' for details.\n"
+	  "Hello from Calypso!\n",
 	  VERSIONSTR);
   fflush(Out);
 }

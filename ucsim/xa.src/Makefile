@@ -26,7 +26,7 @@ M_OR_MM         = -MM
 
 LIBS		= -lnsl  -L$(PRJDIR) -Wl,--start-group -lutil -lcmd -lsim -lguiucsim -Wl,--end-group
 
-prefix          = /usr/local
+prefix          = /home/calypso/Desktop/UCSIM_BIN
 exec_prefix     = ${prefix}
 bindir          = ${exec_prefix}/bin
 libdir          = ${exec_prefix}/lib

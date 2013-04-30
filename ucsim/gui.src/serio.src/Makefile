@@ -21,7 +21,7 @@ EXEEXT		=
 
 curses_ok	= 
 
-prefix          = /usr/local
+prefix          = /home/calypso/Desktop/UCSIM_BIN
 exec_prefix     = ${prefix}
 bindir          = ${exec_prefix}/bin
 libdir          = ${exec_prefix}/lib
