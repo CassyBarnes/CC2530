@@ -160,6 +160,8 @@ cl_51core::mk_hw_elements(void)
   h->init();
   hws->add(interrupt= new cl_interrupt(this));
   interrupt->init();
+  hws->add(radio= new cl_radio(this));
+  radio->init();
   hws->add(h= new cl_uc51_dummy_hw(this));
   h->init();
   /*

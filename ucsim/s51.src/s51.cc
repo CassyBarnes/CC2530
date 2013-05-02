@@ -25,6 +25,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA. */
 /*@1@*/
 
+
 #include "ddconfig.h"
 
 // prj
@@ -48,8 +49,8 @@ main(int argc, char *argv[])
   //class cl_app *app;
   class cl_sim *sim;
 
-  fprintf(stderr, "Hello from Calypso!\n");
-
+  fprintf(stderr, "Hello from Calypso in s51.cc!\n");
+ 
   cpus= cpus_51;
   application= new cl_app();
   application->init(argc, argv);
@@ -57,7 +58,9 @@ main(int argc, char *argv[])
   if (sim->init())
     return(1);
   application->set_simulator(sim);
+  fprintf(stderr, "Hello from Calypso before run!\n");
   retval= /*sim->main()*/application->run();
+  fprintf(stderr, "Hello from Calypso before delete app!\n");
   delete application;
   
   return(retval);

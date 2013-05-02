@@ -310,7 +310,7 @@ cl_console::welcome(void)
 	  "`show w'.\n"
 	  "This is free software, and you are welcome to redistribute it\n"
 	  "under certain conditions; type `show c' for details.\n"
-	  "Hello from Calypso!\n",
+	  "Hello from Calypso in newcmd.cc!\n",
 	  VERSIONSTR);
   fflush(Out);
 }
@@ -490,7 +490,7 @@ char *
 cl_console::read_line(void)
 {
   char *s= NULL;
-
+fprintf(stderr, "Hello from Calypso in newcmd.cc in read_line!\n");
 #ifdef HAVE_GETLINE
   if (getline(&s, 0, in) < 0)
     return(0);

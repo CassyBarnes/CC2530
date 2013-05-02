@@ -1,3 +1,4 @@
+#define DBG_RADIO
 /*
  * Simulator of microcontrollers (interrupt.cc)
  *
@@ -150,6 +151,132 @@ cl_interrupt::print_info(class cl_console *con)
       con->dd_printf("\n");
     }
   con->dd_printf("Active interrupt service(s):\n");
+  con->dd_printf("  Pr Handler  PC       Source\n");
+  for (i= 0; i < uc->it_levels->count; i++)
+    {
+      class it_level *il= (class it_level *)(uc->it_levels->at(i));
+      if (il->level >= 0)
+	{
+	  con->dd_printf("  %2d", il->level);
+	  con->dd_printf(" 0x%06x", il->addr);
+	  con->dd_printf(" 0x%06x", il->PC);
+	  con->dd_printf(" %s", (il->source)?(object_name(il->source)):
+			 "nothing");
+	  con->dd_printf("\n");
+	}
+    }
+}
+
+
+
+
+// Radio (CC2330 specific)
+cl_radio::cl_radio(class cl_uc *auc):
+  cl_hw(auc, HW_CC2530_RADIO, 0, "radio")
+{
+#ifdef DBG_RADIO
+  fprintf(stderr, "%s:%d CC2530 radio %s\n", __FILE__, __LINE__, __FUNCTION__);
+#endif
+}
+
+int
+cl_radio::init(void)
+{
+#ifdef DBG_RADIO
+  fprintf(stderr, "%s:%d CC2530 radio %s\n", __FILE__, __LINE__, __FUNCTION__);
+#endif
+
+  sfr= uc->address_space(MEM_SFR_ID);
+  if (sfr)
+    {
+#ifdef DBG_RADIO
+      fprintf(stderr, "%s:%d CC2530 radio %s: declaration of RFIRQF1 to ucsim machinery.\n", __FILE__, __LINE__, __FUNCTION__);
+#endif
+      register_cell(sfr, RFIRQF1, &cell_RFIRQF1, wtd_restore_write);
+    }
+  return(0);
+}
+
+void
+cl_radio::added_to_uc(void)
+{
+  uc->it_sources->add(new cl_it_src(bmEX0, RFIRQF1, bmIE0, 0x0003, true,
+				    "external #0", 1));
+  uc->it_sources->add(new cl_it_src(bmEX1, RFIRQF1, bmIE1, 0x0013, true, "external #1", 3));
+}
+
+void
+cl_radio::write(class cl_memory_cell *cell, t_mem *val)
+{
+  if (cell == cell_RFIRQF1)
+    {
+#ifdef DBG_RADIO
+      fprintf(stderr, "%s:%d CC2530 radio %s: write to RFIRQF1\n", __FILE__, __LINE__, __FUNCTION__);
+#endif
+    } else {
+#ifdef DBG_RADIO
+    fprintf(stderr, "%s:%d CC2530 radio %s: write to unknown register\n", __FILE__, __LINE__, __FUNCTION__);
+#endif
+  }
+}
+
+/*void
+cl_radio::mem_cell_changed(class cl_m *mem, t_addr addr)
+{
+}*/
+
+int
+cl_radio::tick(int cycles)
+{
+#ifdef DBG_RADIO_VERBOSE
+  fprintf(stderr, "%s:%d CC2530 radio %s\n", __FILE__, __LINE__, __FUNCTION__);
+#endif
+  return(resGO);
+}
+
+void
+cl_radio::reset(void)
+{
+#ifdef DBG_RADIO
+  fprintf(stderr, "%s:%d CC2530 radio %s\n", __FILE__, __LINE__, __FUNCTION__);
+#endif
+
+}
+
+void
+cl_radio::happen(class cl_hw *where, enum hw_event he, void *params)
+{
+  struct ev_port_changed *ep= (struct ev_port_changed *)params;
+}
+
+
+void
+cl_radio::print_info(class cl_console *con)
+{
+  int ie= sfr->get(RFIRQF1);
+  int i;
+
+#ifdef DBG_RADIO
+  fprintf(stderr, "%s:%d CC2530 radio %s\n", __FILE__, __LINE__, __FUNCTION__);
+#endif
+
+  con->dd_printf("Radios are %s. Radio sources:\n",
+		 (ie&bmEA)?"enabled":"disabled");
+  con->dd_printf("  Handler  En  Pr Req Act Name\n");
+  for (i= 0; i < uc->it_sources->count; i++)
+    {
+      class cl_it_src *is= (class cl_it_src *)(uc->it_sources->at(i));
+      con->dd_printf("  0x%06x", is->addr);
+      con->dd_printf(" %-3s", (ie&(is->ie_mask))?"en":"dis");
+      con->dd_printf(" %2d", uc->it_priority(is->ie_mask));
+      con->dd_printf(" %-3s",
+		     (sfr->get(is->src_reg)&(is->src_mask))?
+		     "YES":"no");
+      con->dd_printf(" %-3s", (is->active)?"act":"no");
+      con->dd_printf(" %s", object_name(is));
+      con->dd_printf("\n");
+    }
+  con->dd_printf("Active radio service(s):\n");
   con->dd_printf("  Pr Handler  PC       Source\n");
   for (i= 0; i < uc->it_levels->count; i++)
     {

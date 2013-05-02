@@ -79,6 +79,8 @@ public:
   // Simulation of interrupt system
   class cl_interrupt *interrupt;
   //bool  was_reti;	// Instruction had an effect on IE
+  // Simulation of radio system
+  class cl_radio *radio;
 
 public:
   int result;		// result of instruction execution

@@ -59,6 +59,28 @@ public:
   virtual void print_info(class cl_console *con);
 };
 
+class cl_radio: public cl_hw
+{
+public:
+  class cl_address_space *sfr;
+  class cl_memory_cell *cell_RFIRQF1;
+public:
+  cl_radio(class cl_uc *auc);
+  virtual int init(void);
+
+  virtual void added_to_uc(void);
+
+  //virtual t_mem read(class cl_memory_cell *cell);
+  virtual void write(class cl_memory_cell *cell, t_mem *val);
+
+  //virtual void mem_cell_changed(class cl_m *mem, t_addr addr);
+
+  virtual int tick(int cycles);
+  virtual void reset(void);
+  virtual void happen(class cl_hw *where, enum hw_event he, void *params);
+
+  virtual void print_info(class cl_console *con);
+};
 
 #endif
 

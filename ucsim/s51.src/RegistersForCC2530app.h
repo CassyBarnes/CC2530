@@ -4,12 +4,12 @@
 
 #ifdef CC2530
 
-#define P0	0X80
-#define SP 	0X81
-#define DPH 	0X82
-#define DPL 	0X83
-#define DPL1	0X84
-#define DPH1	0X85
+//#define P0	0X80 // already defined in regs51b.h
+//#define SP 	0X81
+//#define DPH 	0X82
+//#define DPL 	0X83
+//#define DPL1	0X84
+//#define DPH1	0X85
 #define U0CSR	0X86
 #define PCON	0X87
 #define TCON	0X88
