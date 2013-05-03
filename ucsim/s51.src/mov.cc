@@ -411,7 +411,13 @@ cl_51core::inst_movx_a_Sri(uchar code)
   t_mem d;
 
   d= get_reg(code & 0x01)->read();
+
+  #ifndef CC2530
   acc->write(xram->read(sfr->read(P2)*256 + d));
+  #endif
+  #ifdef CC2530
+  acc->write(xram->read(sfr->read(MPAGE)*256 + d));
+  #endif
   tick(1);
   return(resGO);
 }
@@ -503,7 +509,12 @@ cl_51core::inst_movx_Sri_a(uchar code)
   t_mem d;
 
   d= get_reg(code & 0x01)->read();
+  #ifndef CC2530
   xram->write(sfr->read(P2)*256 + d, acc->read());
+  #endif
+  #ifdef CC2530
+  xram->write(sfr->read(MPAGE)*256 + d, acc->read());
+  #endif
   tick(1);
   return(resGO);
 }
