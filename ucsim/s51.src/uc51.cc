@@ -562,12 +562,15 @@ cl_51core::clear_sfr(void)
   sfr->write(DPH, 0);
   sfr->write(IP, 0);
   sfr->write(IE, 0);
+  sfr->write(TCON, 0);
+#ifndef CC2530 
   sfr->write(TMOD, 0);
   sfr->write(TCON, 0);
   sfr->write(TH0, 0);
   sfr->write(TL0, 0);
   sfr->write(TH1, 0);
   sfr->write(TL1, 0);
+  #endif
   sfr->write(SCON, 0);
   sfr->write(PCON, 0);
 
