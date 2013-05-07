@@ -58,9 +58,9 @@ main(int argc, char *argv[])
   if (sim->init())
     return(1);
   application->set_simulator(sim);
-  fprintf(stderr, "Hello from Calypso before run!\n");
+  //fprintf(stderr, "Hello from Calypso before run!\n");
   retval= /*sim->main()*/application->run();
-  fprintf(stderr, "Hello from Calypso before delete app!\n");
+  //fprintf(stderr, "Hello from Calypso before delete app!\n");
   delete application;
   
   return(retval);

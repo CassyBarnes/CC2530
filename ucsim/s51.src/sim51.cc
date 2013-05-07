@@ -59,7 +59,7 @@ cl_sim51::mk_controller(void)
   int i;
   char *typ= NIL;
   class cl_optref type_option(this);
-fprintf(stderr, "Hello from Calypso in sim 51.cc in make controller\n");
+  //fprintf(stderr, "Hello from Calypso in sim 51.cc in make controller\n");
   type_option.init();
   type_option.use("cpu_type");
   i= 0;

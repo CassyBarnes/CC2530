@@ -1004,14 +1004,14 @@ cl_address_space::set_brk(t_addr addr, class cl_brk *brk)
   class cl_memory_cell *cell= cells[idx];
   class cl_memory_operator *op;
 
-  switch (brk->get_event())
+  switch (brk->get_event()) //Modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH: case brkWXREG:
       //e= 'W';
       op= new cl_write_operator(cell, addr, cell->get_data(), cell->get_mask(),
 				uc, brk);
       break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH: case brkRXREG:
       //e= 'R';
       op= new cl_read_operator(cell, addr, cell->get_data(), cell->get_mask(),
 			       uc, brk);
@@ -1038,10 +1038,10 @@ cl_address_space::del_brk(t_addr addr, class cl_brk *brk)
     return;
   class cl_memory_cell *cell= cells[idx];
 
-  switch (brk->get_event())
+  switch (brk->get_event()) //modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR:
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH: case brkWXREG:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH: case brkRXREG:
       cell->del_operator(brk);
       break;
     case brkNONE:

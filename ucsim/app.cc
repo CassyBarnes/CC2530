@@ -146,7 +146,7 @@ int
 cl_app::run(void)
 {
   int done= 0;
-fprintf(stderr, "Hello from Calypso in cl_app::run !\n");
+  //fprintf(stderr, "Hello from Calypso in cl_app::run !\n");
   while (!done &&
 	 going)
     {

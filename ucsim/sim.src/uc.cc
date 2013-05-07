@@ -1053,7 +1053,7 @@ cl_uc::print_disass(t_addr addr, class cl_console *con)
   if (b)
     con->dd_printf("%c", (b->perm == brkFIX)?'F':'D');
   else
-    con->dd_printf(" ");
+    //   con->dd_printf(" ");//By Calypso
   con->dd_printf("%c ", inst_at(addr)?' ':'?');
   con->dd_printf(rom->addr_format, addr); con->dd_printf(" ");
   con->dd_printf(rom->data_format, code);

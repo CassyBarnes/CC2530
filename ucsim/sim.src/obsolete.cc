@@ -367,7 +367,7 @@ cl_mem::dump(t_addr start, t_addr stop, int bpl, class cl_console *con)
 	}
       con->dd_printf("\n");
       dump_finished= start+i;
-      start+= bpl;
+      start+= bpl; 
     }
   return(dump_finished);
 }
@@ -824,12 +824,12 @@ cl_m::set_brk(t_addr addr, class cl_brk *brk)
   else
     cell= array[addr];
 
-  switch (brk->get_event())
+  switch (brk->get_event()) //modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH: case brkWXREG:
       e= 'W';
       break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH: case brkRXREG:
       e= 'R';
       break;
     case brkNONE:
@@ -907,10 +907,10 @@ cl_m::del_brk(t_addr addr, class cl_brk *brk)
   else
     cell= array[addr];
 
-  switch (brk->get_event())
+  switch (brk->get_event()) //modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: e= 'W'; break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH: case brkWXREG: e= 'W'; break;
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH: case brkRXREG:
       e= 'R';
       break;
     case brkNONE:
@@ -1303,13 +1303,13 @@ cl_event_handler::add_bp(class cl_brk *bp)
 
   if (!bp)
     return(CELL_NORMAL);
-  switch (bp->get_event())
+  switch (bp->get_event()) //Modified by Calypso for CC2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH: case brkWXREG:
       t|= CELL_WRITE_BRK;
       write_bps->add(bp);
       break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH: case brkRXREG:
       t|= CELL_READ_BRK;
       read_bps->add(bp);
       break;

@@ -490,7 +490,7 @@ char *
 cl_console::read_line(void)
 {
   char *s= NULL;
-fprintf(stderr, "Hello from Calypso in newcmd.cc in read_line!\n");
+  //fprintf(stderr, "Hello from Calypso in newcmd.cc in read_line!\n");
 #ifdef HAVE_GETLINE
   if (getline(&s, 0, in) < 0)
     return(0);

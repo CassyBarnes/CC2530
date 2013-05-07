@@ -225,6 +225,14 @@ cl_51core::make_memories(void)
   xram= as= new cl_address_space(MEM_XRAM_ID/*"xram"*/, 0, 0x10000, 8);
   as->init();
   address_spaces->add(as);
+  /*added by Calypso for CC2530*/
+  flash= as= new cl_address_space(MEM_FLASH_ID/*"flash"*/, 0x8000, 0x8000, 8);
+  as->init();
+  address_spaces->add(as);
+  xreg= as= new cl_address_space(MEM_XREG_ID/*"xreg"*/, 0x6000, 0x400, 8);
+  as->init();
+  address_spaces->add(as);
+  /* ******************************* */
 
   class cl_address_decoder *ad;
   class cl_memory_chip *chip;
@@ -264,6 +272,28 @@ cl_51core::make_memories(void)
   ad->init();
   as->decoders->add(ad);
   ad->activate(0);
+
+  /*Added by Calypso for CC2530*/
+
+  chip= new cl_memory_chip("flash_chip", 0x8000, 8);
+  chip->init();
+  memchips->add(chip);
+  ad= new cl_address_decoder(as= flash/*address_space(MEM_FLASH_ID)*/,
+			     chip, 0x8000, 0xffff, 0);
+  ad->init();
+  as->decoders->add(ad);
+  ad->activate(0);
+
+  chip= new cl_memory_chip("xreg_chip", 0x400, 8);
+  chip->init();
+  memchips->add(chip);
+  ad= new cl_address_decoder(as= xreg/*address_space(MEM_XREG_ID)*/,
+			     chip, 0x6000, 0x63ff, 0);
+  ad->init();
+  as->decoders->add(ad);
+  ad->activate(0);
+
+  /* ******************************* */
 
   acc= sfr->get_cell(ACC);
   psw= sfr->get_cell(PSW);
@@ -425,7 +455,7 @@ cl_51core::disass(t_addr addr, char *sep)
   return(buf);
 }
 
-
+/*print_regs altered by Calypso on 2013-05-06 for better aestheticism*/
 void
 cl_51core::print_regs(class cl_console *con)
 {
@@ -434,22 +464,29 @@ cl_51core::print_regs(class cl_console *con)
 
   start= psw->get() & 0x18;
   //dump_memory(iram, &start, start+7, 8, /*sim->cmd_out()*/con, sim);
-  iram->dump(start, start+7, 8, con);
+  //iram->dump(start, start+7, 8, con);//Com by Calypso
   start= psw->get() & 0x18;
   data= iram->get(iram->get(start));
-  con->dd_printf("%06x %02x %c",
-	      iram->get(start), data, isprint(data)?data:'.');
+
+  //con->dd_printf("%06x %02x %c",
+  //	      iram->get(start), data, isprint(data)?data:'.');
+  con->dd_printf("  R0= 0x%02x  R1= 0x%02x  R2= 0x%02x  R3= 0x%02x\n  R4= 0x%02x  R5= 0x%02x  R6= 0x%02x  R7= 0x%02x\n", iram->get(start), iram->get(start+1), iram->get(start+2), iram->get(start+3),iram->get(start+4), iram->get(start+5), iram->get(start+6), iram->get(start+7));
+
 
   con->dd_printf("  ACC= 0x%02x %3d %c  B= 0x%02x", sfr->get(ACC), sfr->get(ACC),
 	      isprint(sfr->get(ACC))?(sfr->get(ACC)):'.', sfr->get(B)); 
   //eram2xram();
   data= xram->get(sfr->get(DPH)*256+sfr->get(DPL));
-  con->dd_printf("   DPTR= 0x%02x%02x @DPTR= 0x%02x %3d %c\n", sfr->get(DPH),
-	      sfr->get(DPL), data, data, isprint(data)?data:'.');
+  con->dd_printf("  DPTR= 0x%02x%02x @DPTR= 0x%02x %3d %c\n", sfr->get(DPH),
+  	      sfr->get(DPL), data, data, isprint(data)?data:'.');
+  
+  #ifdef CC2530
+  con->dd_printf("  MPAGE= 0x%02x", sfr->get(MPAGE));
+  #endif
 
   data= iram->get(iram->get(start+1));
-  con->dd_printf("%06x %02x %c", iram->get(start+1), data,
-	      isprint(data)?data:'.');
+  // con->dd_printf("%06x %02x %c", iram->get(start+1), data,
+  //	      isprint(data)?data:'.');
   data= psw->get();
   con->dd_printf("  PSW= 0x%02x CY=%c AC=%c OV=%c P=%c\n", data,
 	      (data&bmCY)?'1':'0', (data&bmAC)?'1':'0',
@@ -564,7 +601,7 @@ cl_51core::clear_sfr(void)
   sfr->write(IE, 0);
   sfr->write(TCON, 0);
 #ifndef CC2530 
-  sfr->write(TMOD, 0);
+  sfr->write(TMOD, 0);//These registers are not defined in CC2530
   sfr->write(TCON, 0);
   sfr->write(TH0, 0);
   sfr->write(TL0, 0);
