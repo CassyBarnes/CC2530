@@ -708,10 +708,12 @@ cl_51core::tick(int cycles)
  */
 
 class cl_memory_cell *
-cl_51core::get_direct(t_mem addr)
+cl_51core::get_direct(t_mem addr)//Modified by Calypso for xreg access
 {
   if (addr < sfr->start_address)
     return(iram->get_cell(addr));
+  else if (addr > (sfr->start_address + sfr->size))
+    return(xreg->get_cell(addr));
   else
     return(sfr->get_cell(addr));
 }

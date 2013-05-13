@@ -69,9 +69,10 @@ class cl_memory: public cl_base
 {
 public:
   t_addr start_address;
+  t_addr size;
 protected:
   class cl_uc *uc;
-  t_addr size;
+  //  t_addr size; //Made public by Calypso
 public:
   char *addr_format, *data_format;
   int width; // in bits

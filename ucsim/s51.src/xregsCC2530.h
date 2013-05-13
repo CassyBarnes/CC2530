@@ -62,6 +62,7 @@
 #define ATEST 0x61BD
 #define PTEST0 0x61BE
 #define PTEST1 0x61BF
+
 #define CSPPROG0 0x61C0
 #define CSPPROG1 0x61C1
 #define CSPPROG2 0x61C2
@@ -92,6 +93,7 @@
 #define CSPY 0x61E3
 #define CSPZ 0x61E4
 #define CSPT 0x61E5
+
 #define FC_OBS_CTRL0 0x61EB
 #define RFC_OBS_CTRL1 0x61EC
 #define RFC_OBS_CTRL2 0x61ED
