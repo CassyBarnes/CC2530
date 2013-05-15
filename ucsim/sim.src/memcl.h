@@ -79,7 +79,7 @@ public:
   t_mem data_mask;
 
   //char *class_name; // used by cl_m!!
-protected:
+  // protected:
   t_addr dump_finished;
 public:
   cl_memory(char *id, t_addr asize, int awidth);
@@ -103,6 +103,9 @@ public:
   virtual t_addr dump(t_addr start, t_addr stop, int bpl,
 		      class cl_console *con);
   virtual t_addr dump(class cl_console *con);
+  /*virtual t_addr xram_dump(t_addr start, t_addr stop, int bpl,
+		      class cl_console *con);//Added by Calypso
+		      virtual t_addr xram_dump(class cl_console *con);//Added by Calypso*/
   virtual bool search_next(bool case_sensitive,
 			   t_mem *array, int len, t_addr *addr);
 

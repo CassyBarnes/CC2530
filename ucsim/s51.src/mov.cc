@@ -41,6 +41,14 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "uc51cl.h"
 #include "regs51.h"
 
+#define DEBUG
+
+#ifdef DEBUG
+#define TRACE() \
+fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
+#else
+#define TRACE()
+#endif
 
 /*
  * 0x74 2 12 MOV A,#data
@@ -387,19 +395,25 @@ cl_51core::inst_xchd_a_Sri(uchar code)
 /*
  * 0xe0 1 24 MOVX A,@DPTR
  *____________________________________________________________________________
- *Mofified by Calypso for correct access to xdata (xram) 
+ *Mofified by Calypso for correct access to xdata (xram)  when CC2530 defined
  */
 
 int
 cl_51core::inst_movx_a_Sdptr(uchar code)
 {
   t_mem d;
+  #ifdef CC2530
   if ((sfr->read(DPH)>=0x60) && (sfr->read(DPH)<= 0x63)){
+    TRACE();
     d=xreg->read(sfr->read(DPH)*256 + sfr->read(DPL));
   }
   else{
     d=xram->read(sfr->read(DPH)*256 + sfr->read(DPL));
   }
+  #endif
+  #ifndef CC2530
+  d=xram->read(sfr->read(DPH)*256 + sfr->read(DPL));
+  #endif
   acc->write(d);
   tick(1);
   return(resGO);
@@ -409,7 +423,7 @@ cl_51core::inst_movx_a_Sdptr(uchar code)
 /*
  * 0xe2-0xe3 1 24 MOVX A,@Ri
  *____________________________________________________________________________
- *Mofified by Calypso for correct access to xdata (xram) 
+ *Mofified by Calypso for correct access to xdata (xram)  when CC2530 defined
  */
 
 int
@@ -419,18 +433,17 @@ cl_51core::inst_movx_a_Sri(uchar code)
 
   d= get_reg(code & 0x01)->read();
 
-  #ifndef CC2530
-  acc->write(xram->read(sfr->read(P2)*256 + d));
-  #endif
-  #ifdef CC2530
-  mpage=sfr->read(MPAGE);
+#ifdef CC2530
+  mpage= sfr->read(MPAGE);
   if (mpage>=0x60 && mpage<=0x63){
     acc->write(xreg->read(mpage*256 + d));
-  }
-  else{
+    TRACE();
+  } else {
     acc->write(xram->read(mpage*256 + d));
   }
-  #endif
+#else
+  acc->write(xram->read(sfr->read(P2)*256 + d));
+#endif // CC2530
   tick(1);
   return(resGO);
 }
@@ -498,16 +511,21 @@ cl_51core::inst_mov_a_rn(uchar code)
 /*
  * 0xf0 1 24 MOVX @DPTR,A
  *____________________________________________________________________________
- *Mofified by Calypso for correct access to xdata (xram) 
+ *Mofified by Calypso for correct access to xdata (xram) when CC2530 defined
  */
 
 int
 cl_51core::inst_movx_Sdptr_a(uchar code)
 {
+#ifdef CC2530
+  TRACE();
   if ((sfr->read(DPH)>=0x60) && (sfr->read(DPH)<= 0x63)){
      xreg->write(sfr->read(DPH)*256 + sfr->read(DPL), acc->read());
-  }
+  } else
   xram->write(sfr->read(DPH)*256 + sfr->read(DPL), acc->read());
+#else
+  xram->write(sfr->read(DPH)*256 + sfr->read(DPL), acc->read());
+#endif
   tick(1);
   return(resGO);
 }
@@ -516,7 +534,7 @@ cl_51core::inst_movx_Sdptr_a(uchar code)
 /*
  * 0xf2-0xf3 1 24 MOVX @Ri,A
  *____________________________________________________________________________
- *Mofified by Calypso for correct access to xdata (xram)
+ *Mofified by Calypso for correct access to xdata (xram) when CC2530 defined
  */
 
 int
@@ -525,16 +543,17 @@ cl_51core::inst_movx_Sri_a(uchar code)
   t_mem d, mpage;
 
   d= get_reg(code & 0x01)->read();
-  #ifndef CC2530
+#ifndef CC2530
   xram->write(sfr->read(P2)*256 + d, acc->read());
-  #endif
-  #ifdef CC2530
+#endif
+#ifdef CC2530
+  TRACE();
   mpage=sfr->read(MPAGE);
-  if ((mpage>=0x60) && (mpage<= 0x63)){
+  if ((mpage >= 0x60) && (mpage <= 0x63)) {
      xreg->write(mpage*256 + d, acc->read());
-  }
-  xram->write(mpage*256 + d, acc->read());
-  #endif
+  } else
+    xram->write(mpage*256 + d, acc->read());
+#endif
   tick(1);
   return(resGO);
 }

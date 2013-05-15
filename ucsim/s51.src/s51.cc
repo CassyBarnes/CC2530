@@ -49,7 +49,7 @@ main(int argc, char *argv[])
   //class cl_app *app;
   class cl_sim *sim;
 
-  fprintf(stderr, "Hello from Calypso in s51.cc!\n");
+  fprintf(stderr, "Hi from Calypso in s51.cc!\n");
  
   cpus= cpus_51;
   application= new cl_app();

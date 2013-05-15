@@ -25,6 +25,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA. */
 /*@1@*/
 
+#include <string>
+
 // prj
 #include "globals.h"
 #include "utils.h"
@@ -34,8 +36,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 // local, cmd.src
 #include "cmduccl.h"
-
-
+using namespace std;
 /*
  * Command: state
  *----------------------------------------------------------------------------
@@ -176,13 +177,14 @@ COMMAND_DO_WORK_UC(cl_reset_cmd)
 COMMAND_DO_WORK_UC(cl_dump_cmd)
 {
   class cl_memory *mem= 0;
+  class cl_memory *xregs= uc->memory("xreg");
   long bpl= 8;
+  std::string fname;
   t_addr start= 0, end;
   class cl_cmd_arg *params[4]= { cmdline->param(0),
 				 cmdline->param(1),
 				 cmdline->param(2),
 				 cmdline->param(3) };
-
   if (params[0] &&
       params[0]->as_bit(uc))
     {
@@ -217,29 +219,105 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
 	  con->dd_printf("No memory specified. Use \"info memory\" for available memories\n");
 	  return(DD_FALSE);
 	}
+      fname=cmdline->param(0)->get_svalue();
+      fprintf(stderr, "memory: %s\n", fname.c_str());
       if (cmdline->syntax_match(uc, MEMORY))
 	{
 	  mem= params[0]->value.memory.memory;
-	  mem->dump(con);
+	  start= mem->dump_finished;
+	  if (fname == "XRAM"){
+	    if ((start >= 0x5FB0)&&(start <= 0x5FFF)){
+	      mem->dump(start, 0x5FFF, 8, con);
+	      fprintf(stderr,"Beginning of xreg part of xram.\n");
+	      xregs->dump(0x6000, start+80-1, 8, con);
+	    }
+	    else if ((start >= 0x6000)&&(start <= 0x63FF)){
+	      if (start >= 0x63B0){
+		xregs->dump(start, 0x63FF, 8, con);
+		fprintf(stderr,"End of xreg part of xram.\n");
+		mem->dump(0x6400, start+80-1, 8, con);
+	      }
+	      else
+		xregs->dump(start, start+80-1, 8, con);		
+	    }
+	    else
+	      mem->dump(con);
+	  }
+	  else{
+	    mem->dump(con);}
 	}
       else if (cmdline->syntax_match(uc, MEMORY ADDRESS)) {
 	mem  = params[0]->value.memory.memory;
 	start= params[1]->value.address;
 	end  = start+10*8-1;
-	mem->dump(start, end, bpl, con);
+	if (fname == "XRAM"){//case of xram memory dump
+	  if ((start >= 0x5FB0)&&(start <= 0x5FFF)){
+	    mem->dump(start, 0x5FFF, bpl, con);
+	    fprintf(stderr,"Beginning of xreg part of xram.\n");
+	    xregs->dump(0x6000, end, bpl, con);
+	  }
+	  else if ((start >= 0x6000)&&(start <= 0x63FF)){
+	    if (start >= 0x63B0){
+	      xregs->dump(start, 0x63FF, bpl, con);
+	      fprintf(stderr,"End of xreg part of xram.\n");
+	      mem->dump(0x6400, end, bpl, con);	      
+	    }
+	    else{
+	      xregs->dump(start, end, bpl, con);}}
+	  else{
+	    mem->dump(start, end, bpl, con);}
+	}
+	else{
+	  mem->dump(start, end, bpl, con);}
       }
       else if (cmdline->syntax_match(uc, MEMORY ADDRESS ADDRESS)) {
 	mem  = params[0]->value.memory.memory;
 	start= params[1]->value.address;
 	end  = params[2]->value.address;
-	mem->dump(start, end, bpl, con);
+	if (fname == "XRAM"){
+	  if ((start >= 0x5FB0)&&(start <= 0x5FFF)){
+	    mem->dump(start, 0x5FFF, bpl, con);
+	    fprintf(stderr,"Beginning of xreg part of xram.\n");
+	    xregs->dump(0x6000, end, bpl, con);
+	  }
+	  else if ((start >= 0x6000)&&(start <= 0x63FF)){
+	    if (end >= 0x63FF){
+	      xregs->dump(start, 0x63FF, bpl, con);
+	      fprintf(stderr,"End of xreg part of xram.\n");
+	      mem->dump(0x6400, end, bpl, con);	 
+	    }
+	    else{
+	      xregs->dump(start, end, bpl, con);}}
+	  else{
+	    mem->dump(start, end, bpl, con);}
+	}
+	else{
+	  mem->dump(start, end, bpl, con);}
       }
       else if (cmdline->syntax_match(uc, MEMORY ADDRESS ADDRESS NUMBER)) {
 	mem  = params[0]->value.memory.memory;
 	start= params[1]->value.address;
 	end  = params[2]->value.address;
 	bpl  = params[3]->value.number;
-	mem->dump(start, end, bpl, con);
+	if (fname == "XRAM"){
+	  if ((start >= 0x5FB0)&&(start <= 0x5FFF)){
+	    mem->dump(start, 0x5FFF, bpl, con);
+	    fprintf(stderr,"Beginning of xreg part of xram.\n");
+	    xregs->dump(0x6000, end, bpl, con);
+	  }
+	  else if ((start >= 0x6000)&&(start <= 0x63FF)){
+	    if (end >= 0x63FF){
+	      xregs->dump(start, 0x63FF, bpl, con);
+	      fprintf(stderr,"Stopped dump at the end of xreg part of xram.\n");
+	      mem->dump(0x6400, end, bpl, con);	 
+	    }
+	    else{
+	      xregs->dump(start, end, bpl, con);}}
+	  else{
+	    mem->dump(start, end, bpl, con);}
+	}
+	else{
+	  mem->dump(start, end, bpl, con);}	
       }
       else
 	con->dd_printf("%s\n", short_help?short_help:"Error: wrong syntax\n");

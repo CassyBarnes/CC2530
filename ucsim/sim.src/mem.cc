@@ -222,6 +222,17 @@ cl_memory::dump(class cl_console *con)
   return(dump(dump_finished, dump_finished+10*8-1, 8, con));
 }
 
+/*t_addr
+cl_memory::xram_dump(class cl_console *con)//Added by Calypso
+{
+  if ((dump_finished >= 0x5FB0)&&(dump_finished <= 0x5FFF))
+    return(dump(dump_finished, 0x5FFF, 8, con));
+  else if ((dump_finished >= 0x6000)&&(dump_finished <= 0x63FF))
+    return(xreg->dump(dump_finished, 0x63FF, 8, con));
+  else
+    return(dump(con));
+    }*/
+
 bool
 cl_memory::search_next(bool case_sensitive,
 		       t_mem *array, int len, t_addr *addr)

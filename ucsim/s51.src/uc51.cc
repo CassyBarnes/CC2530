@@ -466,10 +466,10 @@ cl_51core::print_regs(class cl_console *con)
   //dump_memory(iram, &start, start+7, 8, /*sim->cmd_out()*/con, sim);
   //iram->dump(start, start+7, 8, con);//Com by Calypso
   start= psw->get() & 0x18;
-  data= iram->get(iram->get(start));
+  // data= iram->get(iram->get(start));Commented by Calypso, would cause invalid address errors whenever R0 contained too big a value...
 
-  //con->dd_printf("%06x %02x %c",
-  //	      iram->get(start), data, isprint(data)?data:'.');
+  //con->dd_printf("IRAM START:%06x %02x %c\n",
+  //	      iram->get(start), data, isprint(data)?data:'.');//Commented by Calypso (no need for it)
   con->dd_printf("  R0= 0x%02x  R1= 0x%02x  R2= 0x%02x  R3= 0x%02x\n  R4= 0x%02x  R5= 0x%02x  R6= 0x%02x  R7= 0x%02x\n", iram->get(start), iram->get(start+1), iram->get(start+2), iram->get(start+3),iram->get(start+4), iram->get(start+5), iram->get(start+6), iram->get(start+7));
 
 
