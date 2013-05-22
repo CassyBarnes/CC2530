@@ -216,10 +216,10 @@ cl_51core::make_memories(void)
   rom= as= new cl_address_space(MEM_ROM_ID/*"rom"*/, 0, 0x10000, 8);
   as->init();
   address_spaces->add(as);
-  iram= as= new cl_address_space(MEM_IRAM_ID/*"iram"*/, 0, 0x80, 8);
+  iram= as= new cl_address_space(MEM_IRAM_ID/*"iram"*/, 0, 0x80, 8, 0x1F00);
   as->init();
   address_spaces->add(as);
-  sfr= as= new cl_address_space(MEM_SFR_ID/*"sfr"*/, 0x80, 0x80, 8);
+  sfr= as= new cl_address_space(MEM_SFR_ID/*"sfr"*/, 0x80, 0x80, 8, 0x7000);
   as->init();
   address_spaces->add(as);
   xram= as= new cl_address_space(MEM_XRAM_ID/*"xram"*/, 0, 0x10000, 8);
@@ -229,7 +229,7 @@ cl_51core::make_memories(void)
   flash= as= new cl_address_space(MEM_FLASH_ID/*"flash"*/, 0x8000, 0x8000, 8);
   as->init();
   address_spaces->add(as);
-  xreg= as= new cl_address_space(MEM_XREG_ID/*"xreg"*/, 0x6000, 0x400, 8);
+  xreg= as= new cl_address_space(MEM_XREG_ID/*"xreg"*/, 0x6000, 0x400, 8, 0);
   as->init();
   address_spaces->add(as);
   /* ******************************* */
@@ -460,6 +460,7 @@ void
 cl_51core::print_regs(class cl_console *con)
 {
   t_addr start;
+  t_addr address;
   uchar data;
 
   start= psw->get() & 0x18;
@@ -470,19 +471,22 @@ cl_51core::print_regs(class cl_console *con)
 
   //con->dd_printf("IRAM START:%06x %02x %c\n",
   //	      iram->get(start), data, isprint(data)?data:'.');//Commented by Calypso (no need for it)
-  con->dd_printf("  R0= 0x%02x  R1= 0x%02x  R2= 0x%02x  R3= 0x%02x\n  R4= 0x%02x  R5= 0x%02x  R6= 0x%02x  R7= 0x%02x\n", iram->get(start), iram->get(start+1), iram->get(start+2), iram->get(start+3),iram->get(start+4), iram->get(start+5), iram->get(start+6), iram->get(start+7));
+ con->dd_printf("  R0= 0x%02x  R1= 0x%02x  R2= 0x%02x  R3= 0x%02x\n  R4= 0x%02x  R5= 0x%02x  R6= 0x%02x  R7= 0x%02x\n", iram->get(start), iram->get(start+1), iram->get(start+2), iram->get(start+3),iram->get(start+4), iram->get(start+5), iram->get(start+6), iram->get(start+7));
 
 
-  con->dd_printf("  ACC= 0x%02x %3d %c  B= 0x%02x", sfr->get(ACC), sfr->get(ACC),
-	      isprint(sfr->get(ACC))?(sfr->get(ACC)):'.', sfr->get(B)); 
-  //eram2xram();
-  data= xram->get(sfr->get(DPH)*256+sfr->get(DPL));
-  con->dd_printf("  DPTR= 0x%02x%02x @DPTR= 0x%02x %3d %c\n", sfr->get(DPH),
-  	      sfr->get(DPL), data, data, isprint(data)?data:'.');
+ con->dd_printf("  ACC= 0x%02x %3d %c  B= 0x%02x", sfr->get(ACC), sfr->get(ACC),
+		isprint(sfr->get(ACC))?(sfr->get(ACC)):'.', sfr->get(B)); 
+ address=sfr->get(DPH)*256+sfr->get(DPL);
+ if (address > 0x5FFF && address < 0x6400)
+   data= xreg->get(address);
+ else
+   data= xram->get(address);
+ con->dd_printf("  DPTR= 0x%02x%02x @DPTR= 0x%02x %3d %c\n", sfr->get(DPH),
+		sfr->get(DPL), data, data, isprint(data)?data:'.');
   
-  #ifdef CC2530
-  con->dd_printf("  MPAGE= 0x%02x", sfr->get(MPAGE));
-  #endif
+#ifdef CC2530
+ con->dd_printf("  MPAGE= 0x%02x", sfr->get(MPAGE));
+#endif
 
   data= iram->get(iram->get(start+1));
   // con->dd_printf("%06x %02x %c", iram->get(start+1), data,

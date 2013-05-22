@@ -52,10 +52,23 @@
  *                                                3rd version of memory system
  */
 
+cl_memory::cl_memory(char *id, t_addr asize, int awidth, t_addr aoffset):
+  cl_base()
+{
+  size= asize;
+  xram_offset= aoffset;
+  set_name(id);
+  addr_format= data_format= 0;
+  width= awidth;
+  start_address= 0;
+  uc= 0;
+}
+
 cl_memory::cl_memory(char *id, t_addr asize, int awidth):
   cl_base()
 {
   size= asize;
+  xram_offset=0;
   set_name(id);
   addr_format= data_format= 0;
   width= awidth;
@@ -222,16 +235,6 @@ cl_memory::dump(class cl_console *con)
   return(dump(dump_finished, dump_finished+10*8-1, 8, con));
 }
 
-/*t_addr
-cl_memory::xram_dump(class cl_console *con)//Added by Calypso
-{
-  if ((dump_finished >= 0x5FB0)&&(dump_finished <= 0x5FFF))
-    return(dump(dump_finished, 0x5FFF, 8, con));
-  else if ((dump_finished >= 0x6000)&&(dump_finished <= 0x63FF))
-    return(xreg->dump(dump_finished, 0x63FF, 8, con));
-  else
-    return(dump(con));
-    }*/
 
 bool
 cl_memory::search_next(bool case_sensitive,
@@ -704,8 +707,25 @@ cl_dummy_cell::set(t_mem val)
  *                                                                Address space
  */
 
-cl_address_space::cl_address_space(char *id,
-				   t_addr astart, t_addr asize, int awidth):
+cl_address_space::cl_address_space(char *id, t_addr astart, t_addr asize, 
+				   int awidth, t_addr aoffset):
+  cl_memory(id, asize, awidth, aoffset)
+{
+  start_address= astart;
+  decoders= new cl_decoder_list(2, 2, DD_FALSE);
+  cells= (class cl_memory_cell **)malloc(size * sizeof(class cl_memory_cell*));
+  int i;
+  for (i= 0; i < size; i++)
+    {
+      cells[i]= new cl_memory_cell();
+      cells[i]->init();
+    }
+  fprintf(stderr,"Memory ID: %s\n", this->name);
+  dummy= new cl_dummy_cell();
+}
+
+cl_address_space::cl_address_space(char *id, t_addr astart, t_addr asize, 
+				   int awidth):
   cl_memory(id, asize, awidth)
 {
   start_address= astart;
@@ -717,8 +737,27 @@ cl_address_space::cl_address_space(char *id,
       cells[i]= new cl_memory_cell();
       cells[i]->init();
     }
+  fprintf(stderr,"Memory ID: %s\n", this->name);
   dummy= new cl_dummy_cell();
 }
+
+/*sub_address_space Added by Calypso for CC2530 memory map specifications*/
+/*
+cl_sub_address_space::cl_sub_address_space(char *id,
+				t_addr astart, t_addr asize, int awidth, char *asid):
+  cl_memory(id, asize, awidth)
+{
+  start_address= astart;
+  class cl_address_space *mem= uc->address_space(asid);
+  //cells= (class cl_memory_cell **)malloc(size * sizeof(class cl_memory_cell*));
+  int i;
+  for (i= start_address; i < start_address+size; i++)
+    {
+      cells[i]= mem->cells[i];
+     }
+  fprintf(stderr,"SubMemory ID: %s, part of Memory %s\n", this->name, asid);
+  dummy= new cl_dummy_cell();
+  }*/
 
 cl_address_space::~cl_address_space(void)
 {
@@ -730,6 +769,11 @@ cl_address_space::~cl_address_space(void)
   delete dummy;
 }
 
+/*Added by Calypso*/
+/*cl_sub_address_space::~cl_sub_address_space(void)
+{
+  delete dummy;
+  }*/
   
 t_mem
 cl_address_space::read(t_addr addr)
@@ -1099,6 +1143,13 @@ cl_memory_chip::cl_memory_chip(char *id, int asize, int awidth, int initial):
   array= (t_mem *)malloc(size * sizeof(t_mem));
   init_value= initial;
 }
+
+/*cl_memory_chip::cl_memory_chip(char *id, int asize, int awidth, int initial, t_addr aoffset = 0):
+  cl_memory(id, asize, awidth, aoffset)
+{
+  array= (t_mem *)malloc(size * sizeof(t_mem));
+  init_value= initial;
+  }*/
 
 cl_memory_chip::~cl_memory_chip(void)
 {

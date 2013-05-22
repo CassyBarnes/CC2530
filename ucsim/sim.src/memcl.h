@@ -70,6 +70,7 @@ class cl_memory: public cl_base
 public:
   t_addr start_address;
   t_addr size;
+  t_addr xram_offset;
 protected:
   class cl_uc *uc;
   //  t_addr size; //Made public by Calypso
@@ -82,6 +83,7 @@ public:
   // protected:
   t_addr dump_finished;
 public:
+  cl_memory(char *id, t_addr asize, int awidth, t_addr aoffset);
   cl_memory(char *id, t_addr asize, int awidth);
   virtual ~cl_memory(void);
   virtual int init(void);
@@ -103,9 +105,7 @@ public:
   virtual t_addr dump(t_addr start, t_addr stop, int bpl,
 		      class cl_console *con);
   virtual t_addr dump(class cl_console *con);
-  /*virtual t_addr xram_dump(t_addr start, t_addr stop, int bpl,
-		      class cl_console *con);//Added by Calypso
-		      virtual t_addr xram_dump(class cl_console *con);//Added by Calypso*/
+ 
   virtual bool search_next(bool case_sensitive,
 			   t_mem *array, int len, t_addr *addr);
 
@@ -282,6 +282,7 @@ protected:
 public:
   class cl_decoder_list *decoders;
 public:
+  cl_address_space(char *id, t_addr astart, t_addr asize, int awidth, t_addr aoffset);
   cl_address_space(char *id, t_addr astart, t_addr asize, int awidth);
   virtual ~cl_address_space(void);
 
@@ -331,6 +332,17 @@ public:
   virtual t_index add(class cl_address_space *mem);
 };
 
+/*Added by Calypso for CC2530 memory*/
+
+/*class cl_sub_address_space: public cl_address_space
+{
+protected:
+  class cl_memory_cell  *dummy;
+public:
+  cl_sub_address_space(char *id, t_addr astart, t_addr asize, int awidth, char *asid);
+  virtual ~cl_sub_address_space(void);
+
+};*/
 
 /*
  * Memory chip (storage)
@@ -343,6 +355,7 @@ protected:
   int init_value;
 public:
   cl_memory_chip(char *id, int asize, int awidth, int initial= -1);
+  //cl_memory_chip(char *id, int asize, int awidth, int initial= -1, t_addr aoffset);
   virtual ~cl_memory_chip(void);
   virtual int init(void);
 

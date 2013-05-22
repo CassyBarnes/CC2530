@@ -407,6 +407,12 @@ cl_51core::inst_movx_a_Sdptr(uchar code)
     TRACE();
     d=xreg->read(sfr->read(DPH)*256 + sfr->read(DPL));
   }
+  else if (sfr->read(DPH)==0x1F){
+    d=iram->read(sfr->read(DPH)*256 + sfr->read(DPL));
+  }
+  else if ((sfr->read(DPH)==0x70) && (sfr->read(DPL)>= 0x80)){
+    d=sfr->read(sfr->read(DPH)*256 + sfr->read(DPL));
+  }
   else{
     d=xram->read(sfr->read(DPH)*256 + sfr->read(DPL));
   }
@@ -438,7 +444,15 @@ cl_51core::inst_movx_a_Sri(uchar code)
   if (mpage>=0x60 && mpage<=0x63){
     acc->write(xreg->read(mpage*256 + d));
     TRACE();
-  } else {
+  } 
+  else if (mpage==0x1F){
+    acc->write(iram->read(mpage*256 + d));
+    TRACE();
+  else if (mpage==0x70 && d>=0x80){
+    acc->write(sfr->read(mpage*256 + d));
+    TRACE();
+  }
+  else {
     acc->write(xram->read(mpage*256 + d));
   }
 #else
@@ -520,9 +534,16 @@ cl_51core::inst_movx_Sdptr_a(uchar code)
 #ifdef CC2530
   TRACE();
   if ((sfr->read(DPH)>=0x60) && (sfr->read(DPH)<= 0x63)){
-     xreg->write(sfr->read(DPH)*256 + sfr->read(DPL), acc->read());
-  } else
-  xram->write(sfr->read(DPH)*256 + sfr->read(DPL), acc->read());
+    xreg->write(sfr->read(DPH)*256 + sfr->read(DPL), acc->read());
+  } 
+  else if (sfr->read(DPH)==0x1F){
+    iram->write(sfr->read(DPH)*256 + sfr->read(DPL));
+  }
+  else if ((sfr->read(DPH)==0x70) && (sfr->read(DPL)>= 0x80)){
+    sfr->write(sfr->read(DPH)*256 + sfr->read(DPL));
+  }
+  else
+    xram->write(sfr->read(DPH)*256 + sfr->read(DPL), acc->read());
 #else
   xram->write(sfr->read(DPH)*256 + sfr->read(DPL), acc->read());
 #endif
@@ -550,8 +571,15 @@ cl_51core::inst_movx_Sri_a(uchar code)
   TRACE();
   mpage=sfr->read(MPAGE);
   if ((mpage >= 0x60) && (mpage <= 0x63)) {
-     xreg->write(mpage*256 + d, acc->read());
-  } else
+    xreg->write(mpage*256 + d, acc->read());
+  }
+  else if ((mpage == 0x70) && (d >= 0x80)) {
+    sfr->write(mpage*256 + d, acc->read());
+  }
+  else if (mpage == 0x1F) {
+    iram->write(mpage*256 + d, acc->read());
+  }
+  else
     xram->write(mpage*256 + d, acc->read());
 #endif
   tick(1);

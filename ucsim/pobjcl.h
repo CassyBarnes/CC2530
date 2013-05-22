@@ -50,10 +50,11 @@ class cl_event;
 class cl_base
 {
 private:
-  char *name;
+  //  char *name;
   class cl_base *parent;
   class cl_list *children;
 public:
+  char *name;//Made public by Calypso (command dump checks name of dumped memory)
   cl_base(void);
   virtual ~cl_base(void);
 

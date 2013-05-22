@@ -29,7 +29,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define STYPES_HEADER
 
 #include "ddconfig.h"
-
+#include <assert.h>
 
 typedef unsigned char	uchar;
 typedef unsigned int	uint;
@@ -37,6 +37,20 @@ typedef unsigned long	ulong;
 typedef TYPE_DWORD	t_addr;		/* 32 bit max */
 typedef TYPE_UWORD	t_mem;		/* 16 bit max */
 typedef TYPE_WORD	t_smem;		/* signed 16 bit memory */
+
+/*All cases where a memory part a has an intersection with another memory part r*/
+inline bool has_intersection(t_addr a_start, t_addr a_end, t_addr r_start, t_addr r_end)
+{
+  assert(a_start <= a_end);
+  assert(r_start <= r_end);
+
+  /*  return (((a_end >= r_start) || (a_start >= r_start)) &&
+      ((r_end >= a_start) || (a_start <= r_start)))   );*/
+ return ((a_start <= r_start) && (a_end >= r_start) && (a_end <= r_end) 
+	 || (a_end >= r_start) && (a_end <= r_end) && (a_start >= r_start) && (a_start <= r_end) 
+	 || (a_end >= r_end) && (a_start <= r_start) 
+	 || (a_end >= r_end) && (a_start >= r_start) && (a_start <= r_end));
+   }
 
 struct id_element
 {

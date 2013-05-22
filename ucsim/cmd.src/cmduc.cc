@@ -37,6 +37,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 // local, cmd.src
 #include "cmduccl.h"
 using namespace std;
+
+#define XREG_START_ADDR 0x6000
+
 /*
  * Command: state
  *----------------------------------------------------------------------------
@@ -176,15 +179,13 @@ COMMAND_DO_WORK_UC(cl_reset_cmd)
 //		     class cl_cmdline *cmdline, class cl_console *con)
 COMMAND_DO_WORK_UC(cl_dump_cmd)
 {
-  class cl_memory *mem= 0;
-  class cl_memory *xregs= uc->memory("xreg");
-  long bpl= 8;
-  std::string fname;
-  t_addr start= 0, end;
+  class cl_memory *mem = NULL;
   class cl_cmd_arg *params[4]= { cmdline->param(0),
 				 cmdline->param(1),
 				 cmdline->param(2),
 				 cmdline->param(3) };
+
+  // 1. Dumping registers that should be broken down into identified bits:
   if (params[0] &&
       params[0]->as_bit(uc))
     {
@@ -210,120 +211,106 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
 	}
       if (params[0])
 	con->dd_printf("%s\n", short_help?short_help:"Error: wrong syntax\n");
-    }
-  else
-    {
-      if (!params[0] ||
-	  !params[0]->as_memory(uc))
-	{
-	  con->dd_printf("No memory specified. Use \"info memory\" for available memories\n");
-	  return(DD_FALSE);
-	}
-      fname=cmdline->param(0)->get_svalue();
-      fprintf(stderr, "memory: %s\n", fname.c_str());
-      if (cmdline->syntax_match(uc, MEMORY))
-	{
-	  mem= params[0]->value.memory.memory;
-	  start= mem->dump_finished;
-	  if (fname == "XRAM"){
-	    if ((start >= 0x5FB0)&&(start <= 0x5FFF)){
-	      mem->dump(start, 0x5FFF, 8, con);
-	      fprintf(stderr,"Beginning of xreg part of xram.\n");
-	      xregs->dump(0x6000, start+80-1, 8, con);
-	    }
-	    else if ((start >= 0x6000)&&(start <= 0x63FF)){
-	      if (start >= 0x63B0){
-		xregs->dump(start, 0x63FF, 8, con);
-		fprintf(stderr,"End of xreg part of xram.\n");
-		mem->dump(0x6400, start+80-1, 8, con);
-	      }
-	      else
-		xregs->dump(start, start+80-1, 8, con);		
-	    }
-	    else
-	      mem->dump(con);
-	  }
-	  else{
-	    mem->dump(con);}
-	}
-      else if (cmdline->syntax_match(uc, MEMORY ADDRESS)) {
-	mem  = params[0]->value.memory.memory;
-	start= params[1]->value.address;
-	end  = start+10*8-1;
-	if (fname == "XRAM"){//case of xram memory dump
-	  if ((start >= 0x5FB0)&&(start <= 0x5FFF)){
-	    mem->dump(start, 0x5FFF, bpl, con);
-	    fprintf(stderr,"Beginning of xreg part of xram.\n");
-	    xregs->dump(0x6000, end, bpl, con);
-	  }
-	  else if ((start >= 0x6000)&&(start <= 0x63FF)){
-	    if (start >= 0x63B0){
-	      xregs->dump(start, 0x63FF, bpl, con);
-	      fprintf(stderr,"End of xreg part of xram.\n");
-	      mem->dump(0x6400, end, bpl, con);	      
-	    }
-	    else{
-	      xregs->dump(start, end, bpl, con);}}
-	  else{
-	    mem->dump(start, end, bpl, con);}
-	}
-	else{
-	  mem->dump(start, end, bpl, con);}
-      }
-      else if (cmdline->syntax_match(uc, MEMORY ADDRESS ADDRESS)) {
-	mem  = params[0]->value.memory.memory;
-	start= params[1]->value.address;
-	end  = params[2]->value.address;
-	if (fname == "XRAM"){
-	  if ((start >= 0x5FB0)&&(start <= 0x5FFF)){
-	    mem->dump(start, 0x5FFF, bpl, con);
-	    fprintf(stderr,"Beginning of xreg part of xram.\n");
-	    xregs->dump(0x6000, end, bpl, con);
-	  }
-	  else if ((start >= 0x6000)&&(start <= 0x63FF)){
-	    if (end >= 0x63FF){
-	      xregs->dump(start, 0x63FF, bpl, con);
-	      fprintf(stderr,"End of xreg part of xram.\n");
-	      mem->dump(0x6400, end, bpl, con);	 
-	    }
-	    else{
-	      xregs->dump(start, end, bpl, con);}}
-	  else{
-	    mem->dump(start, end, bpl, con);}
-	}
-	else{
-	  mem->dump(start, end, bpl, con);}
-      }
-      else if (cmdline->syntax_match(uc, MEMORY ADDRESS ADDRESS NUMBER)) {
-	mem  = params[0]->value.memory.memory;
-	start= params[1]->value.address;
-	end  = params[2]->value.address;
-	bpl  = params[3]->value.number;
-	if (fname == "XRAM"){
-	  if ((start >= 0x5FB0)&&(start <= 0x5FFF)){
-	    mem->dump(start, 0x5FFF, bpl, con);
-	    fprintf(stderr,"Beginning of xreg part of xram.\n");
-	    xregs->dump(0x6000, end, bpl, con);
-	  }
-	  else if ((start >= 0x6000)&&(start <= 0x63FF)){
-	    if (end >= 0x63FF){
-	      xregs->dump(start, 0x63FF, bpl, con);
-	      fprintf(stderr,"Stopped dump at the end of xreg part of xram.\n");
-	      mem->dump(0x6400, end, bpl, con);	 
-	    }
-	    else{
-	      xregs->dump(start, end, bpl, con);}}
-	  else{
-	    mem->dump(start, end, bpl, con);}
-	}
-	else{
-	  mem->dump(start, end, bpl, con);}	
-      }
-      else
-	con->dd_printf("%s\n", short_help?short_help:"Error: wrong syntax\n");
+
+      return(DD_FALSE);
     }
 
-  return(DD_FALSE);;
+
+  // 2. Error message if no parameter or if parameter is not of type 'memory':
+  if (!params[0] ||
+      !params[0]->as_memory(uc))
+    {
+      con->dd_printf("No memory specified. Use \"info memory\" for available memories\n");
+      return(DD_FALSE);
+    }
+
+
+  // 3. Dump a memory:
+
+  // 3.0 Debug message
+  {
+    string fname;
+    fname = cmdline->param(0)->get_svalue();
+    fprintf(stderr, "memory: %s\n", fname.c_str());
+  }
+
+  // 3.1 Define the interval to print, depending on arguments of dump command:
+  t_addr d_start = 0;
+  t_addr d_end   = 0;
+  long   bpl   = 8;
+
+  mem  = params[0]->value.memory.memory;
+
+  if (cmdline->syntax_match(uc, MEMORY)) {
+    d_start= mem->dump_finished;
+    d_end  = d_start+10*8-1;
+  } else if (cmdline->syntax_match(uc, MEMORY ADDRESS)) {
+    d_start= params[1]->value.address;
+    d_end  = d_start+10*8-1;
+  } else if (cmdline->syntax_match(uc, MEMORY ADDRESS ADDRESS)) {
+    d_start= params[1]->value.address;
+    d_end  = params[2]->value.address;
+  } else if (cmdline->syntax_match(uc, MEMORY ADDRESS ADDRESS NUMBER)) {
+    d_start= params[1]->value.address;
+    d_end  = params[2]->value.address;
+    bpl  = params[3]->value.number;	
+  }
+  else {
+    con->dd_printf("%s\n", short_help?short_help:"Error: wrong syntax\n");
+    return(DD_FALSE);
+  }
+
+  class cl_memory * tab[3];
+  tab[0] = uc->memory("xreg");
+  tab[1] = uc->memory("sfr");
+  tab[2] = uc->memory("iram");
+  // tab[3] = uc->memory("xreg");
+
+  class cl_memory *xram = uc->memory("xram");
+
+  if (mem == xram) {
+    int i;
+    int tab_size;
+    tab_size=(sizeof tab)/(sizeof(cl_memory *)); 
+    for (i=0; i<tab_size; i++){
+      // 1. Check whether there is an intersection with xregs, sfr, iram (=data):
+      t_addr r_start = tab[i]->xram_offset + tab[i]->start_address;
+      t_addr r_end   = tab[i]->xram_offset + tab[i]->start_address + tab[i]->size;
+      t_addr offset  =  tab[i]->xram_offset;//used for sfr and iram
+
+      if (has_intersection(d_start, d_end, r_start, r_end)) {
+
+	if ((d_start <= r_start) && (d_end >= r_start) && (d_end <= r_end)) {
+	  fprintf(stderr,"Dump of xram (including beginning of %s).\n", tab[i]->name);
+	  xram->dump(d_start, r_start-1, bpl, con);
+	  fprintf(stderr,"\n*******Beginning of %s section of xram.*******\n\n",tab[i]->name);
+	  tab[i]->dump(r_start - offset, d_end - offset, bpl, con);
+	}
+	else if ((d_end >= r_start) && (d_end <= r_end) && 
+		 (d_start >= r_start) && (d_start <= r_end)) {
+	  fprintf(stderr,"Dumping part of %s section of xram.\n", tab[i]->name); 
+	  tab[i]->dump(d_start - offset, d_end - offset, bpl, con);
+	}
+	else if ((d_end >= r_end) && (d_start <= r_start)) {
+	  fprintf(stderr,"Dump of xram (including the %s section).\n", tab[i]->name);
+	  xram->dump(d_start, r_start-1, bpl, con);
+	  fprintf(stderr,"\n*******Beginning of %s section of xram.*******\n\n",tab[i]->name);
+	  tab[i]->dump(r_start - offset, r_end - offset, bpl, con);
+	  fprintf(stderr,"\n*******End of %s section of xram.*******\n\n",tab[i]->name);
+	  xram->dump(r_end, d_end, bpl, con);
+	}
+	else if ((d_end >= r_end) && (d_start >= r_start) && (d_start <= r_end)) {
+	  fprintf(stderr,"Dump of xram (including end of %s).\n", tab[i]->name);
+	  tab[i]->dump(d_start - offset, r_end - offset, bpl, con);
+	  fprintf(stderr,"\n*******End of %s section of xram.*******\n\n",tab[i]->name); 
+ 	  xram->dump(r_end, d_end, bpl, con);
+	}
+      }
+    }
+  } else {
+    mem->dump(d_start, d_end, bpl, con);
+  }
+  return(DD_FALSE);
 }
 
 
