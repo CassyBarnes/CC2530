@@ -46,7 +46,10 @@ struct id_element mem_ids[]= {
   { MEM_SFR  , "SFR  " },
   { MEM_IXRAM, "IXRAM" },
   { MEM_DUMMY, "DUMMY" },
-  { MEM_FLASH, "FLASH" },//added by Calypso for CC2530 
+  { MEM_FLASHBANK0, "FLASHBANK0" },//added by Calypso for CC2530
+  { MEM_FLASHBANK1, "FLASHBANK1" },
+  { MEM_FLASHBANK2, "FLASHBANK2" },
+  { MEM_FLASHBANK3, "FLASHBANK3" },
   { MEM_XREG, "XREG" },//added by Calypso for CC2530
   { 0, 0 }
 };
@@ -58,7 +61,10 @@ struct id_element mem_classes[]= {
   { MEM_SFR  , "sfr" },
   { MEM_IXRAM, "ixram" },
   { MEM_DUMMY, "dummy" },
-  { MEM_FLASH, "flash" },//added by Calypso for CC2530 
+  { MEM_FLASHBANK0, "FLASHBANK0" },//added by Calypso for CC2530
+  { MEM_FLASHBANK1, "FLASHBANK1" },
+  { MEM_FLASHBANK2, "FLASHBANK2" },
+  { MEM_FLASHBANK3, "FLASHBANK3" },
   { MEM_XREG, "xreg" },//added by Calypso for CC2530 
   { 0, 0 }
 };

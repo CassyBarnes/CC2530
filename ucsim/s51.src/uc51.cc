@@ -226,10 +226,19 @@ cl_51core::make_memories(void)
   as->init();
   address_spaces->add(as);
   /*added by Calypso for CC2530*/
-  flash= as= new cl_address_space(MEM_FLASH_ID/*"flash"*/, 0x8000, 0x8000, 8);
+  flashbank0= as= new cl_address_space(MEM_FLASHBANK0_ID, 0, 0x8000, 8, 0);
   as->init();
   address_spaces->add(as);
-  xreg= as= new cl_address_space(MEM_XREG_ID/*"xreg"*/, 0x6000, 0x400, 8, 0);
+  flashbank1= as= new cl_address_space(MEM_FLASHBANK1_ID, 0, 0x8000, 0x8000);
+  as->init();
+  address_spaces->add(as);
+  flashbank2= as= new cl_address_space(MEM_FLASHBANK2_ID, 0, 0x8000, 0x8000);
+  as->init();
+  address_spaces->add(as);
+  flashbank3= as= new cl_address_space(MEM_FLASHBANK3_ID, 0, 0x8000, 0x8000);
+  as->init();
+  address_spaces->add(as);
+  xreg= as= new cl_address_space(MEM_XREG_ID, 0x6000, 0x400, 8, 0);
   as->init();
   address_spaces->add(as);
   /* ******************************* */
@@ -278,7 +287,7 @@ cl_51core::make_memories(void)
   chip= new cl_memory_chip("flash_chip", 0x8000, 8);
   chip->init();
   memchips->add(chip);
-  ad= new cl_address_decoder(as= flash/*address_space(MEM_FLASH_ID)*/,
+  ad= new cl_address_decoder(as= flashbank0/*address_space(MEM_FLASH_ID)*/,
 			     chip, 0x8000, 0xffff, 0);
   ad->init();
   as->decoders->add(ad);

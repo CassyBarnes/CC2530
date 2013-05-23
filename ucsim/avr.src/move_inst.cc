@@ -42,7 +42,7 @@ cl_avr::lpm(t_mem code)
   t_addr addr;
   t_mem data;
 
-  addr= ram->get(ZH)*256 + ram->get(ZL);
+  addr= ram->get(ZH)*256 + ram->get(ZL); 
   data= rom->read(addr);
   if (addr & 1)
     ram->/*write*/set(0, (data>>8)&0xff);

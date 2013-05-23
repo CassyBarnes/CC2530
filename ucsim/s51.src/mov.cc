@@ -448,6 +448,7 @@ cl_51core::inst_movx_a_Sri(uchar code)
   else if (mpage==0x1F){
     acc->write(iram->read(mpage*256 + d));
     TRACE();
+  }
   else if (mpage==0x70 && d>=0x80){
     acc->write(sfr->read(mpage*256 + d));
     TRACE();
@@ -533,19 +534,20 @@ cl_51core::inst_movx_Sdptr_a(uchar code)
 {
 #ifdef CC2530
   TRACE();
+  t_addr dp = sfr->read(DPH)*256 + sfr->read(DPL);
   if ((sfr->read(DPH)>=0x60) && (sfr->read(DPH)<= 0x63)){
-    xreg->write(sfr->read(DPH)*256 + sfr->read(DPL), acc->read());
+    xreg->write(dp, acc->read());
   } 
   else if (sfr->read(DPH)==0x1F){
-    iram->write(sfr->read(DPH)*256 + sfr->read(DPL));
+    iram->write(dp, acc->read());
   }
   else if ((sfr->read(DPH)==0x70) && (sfr->read(DPL)>= 0x80)){
-    sfr->write(sfr->read(DPH)*256 + sfr->read(DPL));
-  }
+    sfr->write(dp, acc->read());
+    }
   else
-    xram->write(sfr->read(DPH)*256 + sfr->read(DPL), acc->read());
+    xram->write(dp, acc->read());
 #else
-  xram->write(sfr->read(DPH)*256 + sfr->read(DPL), acc->read());
+  xram->write(dp, acc->read());
 #endif
   tick(1);
   return(resGO);

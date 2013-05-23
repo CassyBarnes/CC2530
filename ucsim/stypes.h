@@ -127,7 +127,10 @@ enum mem_class
   MEM_IXRAM,
   MEM_TYPES,
   MEM_XREG,//added by Calypso for cc2530
-  MEM_FLASH //added by Calypso for cc2530
+  MEM_FLASHBANK0, //added by Calypso for cc2530
+  MEM_FLASHBANK1,
+  MEM_FLASHBANK2,
+  MEM_FLASHBANK3
 };
 
 #define MEM_ROM_ID	"rom"
@@ -135,7 +138,10 @@ enum mem_class
 #define MEM_XRAM_ID	"xram"
 #define MEM_IXRAM_ID	"ixram"
 #define MEM_IRAM_ID	"iram"
-#define MEM_FLASH_ID	"flash" //added by Calypso for cc2530
+#define MEM_FLASHBANK0_ID	"flashbank0" //added by Calypso for cc2530
+#define MEM_FLASHBANK1_ID	"flashbank1"
+#define MEM_FLASHBANK2_ID	"flashbank2"
+#define MEM_FLASHBANK3_ID	"flashbank3"
 #define MEM_XREG_ID	"xreg" //added by Calypso for cc2530
 
 // States of simulator

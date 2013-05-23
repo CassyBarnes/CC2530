@@ -826,10 +826,10 @@ cl_m::set_brk(t_addr addr, class cl_brk *brk)
 
   switch (brk->get_event()) //modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH: case brkWXREG:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH0: case brkWXREG:
       e= 'W';
       break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH: case brkRXREG:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH0: case brkRXREG:
       e= 'R';
       break;
     case brkNONE:
@@ -909,8 +909,8 @@ cl_m::del_brk(t_addr addr, class cl_brk *brk)
 
   switch (brk->get_event()) //modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH: case brkWXREG: e= 'W'; break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH: case brkRXREG:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH0: case brkWXREG: e= 'W'; break;
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH0: case brkRXREG:
       e= 'R';
       break;
     case brkNONE:
@@ -1305,11 +1305,11 @@ cl_event_handler::add_bp(class cl_brk *bp)
     return(CELL_NORMAL);
   switch (bp->get_event()) //Modified by Calypso for CC2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH: case brkWXREG:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH0: case brkWXREG:
       t|= CELL_WRITE_BRK;
       write_bps->add(bp);
       break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH: case brkRXREG:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH0: case brkRXREG:
       t|= CELL_READ_BRK;
       read_bps->add(bp);
       break;

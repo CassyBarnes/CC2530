@@ -802,8 +802,8 @@ cl_radio::read(class cl_memory_cell *cell)
     fprintf(stderr, "%s:%d CC2530 radio %s: read of SLEEPSTA\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_CLKCONSTA){
     fprintf(stderr, "%s:%d CC2530 radio %s: read of CLKCONSTA\n", __FILE__, __LINE__, __FUNCTION__);}
-  else if (cell == cell_FMAP){
-    fprintf(stderr,  "%s:%d CC2530 radio %s: read of FMAP\n", __FILE__, __LINE__, __FUNCTION__);}
+  /*  else if (cell == cell_FMAP){
+      fprintf(stderr,  "%s:%d CC2530 radio %s: read of FMAP\n", __FILE__, __LINE__, __FUNCTION__);}*/
   else if (cell == cell_T2IRQF){
     fprintf(stderr, "%s:%d CC2530 radio %s: read of T2IRQF\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_T2M0){
@@ -972,9 +972,9 @@ cl_radio::read(class cl_memory_cell *cell)
     fprintf(stderr, "%s:%d CC2530 radio %s: read of P0DIR\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_P1DIR){
     fprintf(stderr, "%s:%d  CC2530 radio %s: read of P1DIR\n", __FILE__, __LINE__, __FUNCTION__);}
-  else {
-    fprintf(stderr, "%s:%d CC2530 radio %s: read of unknown register\n", __FILE__, __LINE__, __FUNCTION__);
-  }
+  /*  else {
+      fprintf(stderr, "%s:%d CC2530 radio %s: read of unknown register\n", __FILE__, __LINE__, __FUNCTION__);
+      }*/
 #endif
   return (cell->get());
 }

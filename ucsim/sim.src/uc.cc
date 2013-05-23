@@ -33,6 +33,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <ctype.h>
 #include "i_string.h"
 
+#include "../s51.src/regs51.h"
+
 // prj
 #include "globals.h"
 #include "utils.h"
@@ -735,6 +737,8 @@ cl_uc::read_hex_file(const char *nam)
   bool ok, get_low= 1;
   uchar low= 0, high;
 
+  class cl_memory *flashbank0 = memory("flashbank0");
+
   if (!rom)
     {
       sim->app->get_commander()->
@@ -792,7 +796,8 @@ cl_uc::read_hex_file(const char *nam)
 			{
 			  if (rom->width <= 8)
 			    {
-			      rom->set(addr, rec[i]);
+			      // rom->set(addr, rec[i]);
+			      flashbank0->set(addr, rec[i]); 
 			      addr++;
 			      written++;
 			    }
@@ -806,7 +811,8 @@ cl_uc::read_hex_file(const char *nam)
 			      else
 				{
 				  high= rec[i];
-				  rom->set(addr, (high*256)+low);
+				  // rom->set(addr, (high*256)+low);
+				  flashbank0->set(addr, (high*256)+low);
 				  addr++;
 				  written++;
 				  get_low= 1;
@@ -1483,7 +1489,7 @@ cl_uc::del_counter(char *nam)
 /*
  * Fetch without checking for breakpoint hit
  */
-
+//Modified by Calypso for flash access
 t_mem
 cl_uc::fetch(void)
 {
@@ -1492,6 +1498,22 @@ cl_uc::fetch(void)
   if (!rom)
     return(0);
 
+  /* int fmap = FMAP & 0x07;
+    switch (fmap)
+    {
+    case 0x0:
+      code= xreg->read(PC);
+      break;
+    case 0x1:
+      code= flashbank1->read(PC);
+      break;
+    case 0x2:
+      code= flashbank2->read(PC);
+      break;
+    case 0x3:
+      code= flashbank3->read(PC);
+      break;
+      }*/
   code= rom->read(PC);
   PC= rom->inc_address(PC);
   return(code);

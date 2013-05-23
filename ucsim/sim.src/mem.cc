@@ -47,6 +47,7 @@
 #include "memcl.h"
 #include "hwcl.h"
 
+#include "../s51.src/regs51.h"
 
 /*
  *                                                3rd version of memory system
@@ -195,7 +196,7 @@ cl_memory::dump(t_addr start, t_addr stop, int bpl, class cl_console *con)
 	     (start+i <= stop);
 	   i++)
 	{
-	  con->dd_printf(data_format, /*read*/get(start+i)); con->dd_printf(" ");
+	  con->dd_printf(data_format, read/*get*/(start+i)); con->dd_printf(" ");
 	}
       while (i < bpl)
 	{
@@ -774,7 +775,8 @@ cl_address_space::~cl_address_space(void)
 {
   delete dummy;
   }*/
-  
+
+ //Modified by Calypso for rom read redirect to correct flashbank  
 t_mem
 cl_address_space::read(t_addr addr)
 {
@@ -785,7 +787,33 @@ cl_address_space::read(t_addr addr)
       err_inv_addr(addr);
       return(dummy->read());
     }
-  return(cells[idx]->read());
+  char *asname = get_name();
+  class cl_memory *flashbank0 = uc->memory("flashbank0");
+  class cl_memory *flashbank1 = uc->memory("flashbank1");
+  class cl_memory *flashbank2 = uc->memory("flashbank2");
+  class cl_memory *flashbank3 = uc->memory("flashbank3");
+  class cl_memory *sfr = uc->memory("sfr");
+  class cl_memory *rom = uc->memory("rom");
+
+  if (asname == rom->get_name()){
+    int fmap = sfr->read(FMAP) & 0x07;
+    switch (fmap)
+      {
+      case 0:
+	return(flashbank0->read(idx));
+      case 1:
+	return(flashbank1->read(idx));
+      case 2:
+	return(flashbank2->read(idx));
+      case 3:
+	return(flashbank3->read(idx));
+      default:
+	fprintf(stderr, "Invalid fmap value.\n");
+      return(cells[idx]->read());
+      }
+  }
+  else
+    return(cells[idx]->read());
 }
 
 t_mem
@@ -804,14 +832,49 @@ cl_address_space::read(t_addr addr, enum hw_cath skip)
 t_mem
 cl_address_space::get(t_addr addr)
 {
+  char *asname = get_name();
+  class cl_memory *flashbank0 = uc->memory("flashbank0");
+  class cl_memory *flashbank1 = uc->memory("flashbank1");
+  class cl_memory *flashbank2 = uc->memory("flashbank2");
+  class cl_memory *flashbank3 = uc->memory("flashbank3");
+  class cl_memory *sfr = uc->memory("sfr");
+  class cl_memory *rom = uc->memory("rom");
+
   t_addr idx= addr-start_address;
-  if (idx >= size ||
-      addr < start_address)
-    {
-      err_inv_addr(addr);
-      return(dummy->get());
+
+  if (asname == rom->get_name()){
+    if (idx < 0x8000)
+      return(flashbank0->get(idx));
+    else {
+      int fmap = sfr->read(FMAP) & 0x07;
+      idx %= 0x8000;
+      switch (fmap)
+	{
+	case 0:
+	  return(flashbank0->get(idx));
+	case 1:
+	  return(flashbank1->get(idx));
+	case 2:
+	  return(flashbank2->get(idx));
+	case 3:
+	  return(flashbank3->get(idx));
+	default:
+	  fprintf(stderr, "Invalid fmap value.\n");
+	  return(cells[idx]->get());
+	}
     }
-  return(cells[idx]->get());
+  }
+  else {
+    if (idx >= size ||
+	addr < start_address)
+      {
+	fprintf(stderr, "addr: 0x%02x\tstart_address: 0x%02x\tidx: 0x%02x\tsize of %s:0x%02x.\n", addr, start_address, idx, get_name(), size);
+	fprintf(stderr, "Erreur fatale.\n");
+	err_inv_addr(addr);
+	return(dummy->get());
+      }
+    return(cells[idx]->get());
+  }
 }
 
 t_mem
@@ -1061,12 +1124,12 @@ cl_address_space::set_brk(t_addr addr, class cl_brk *brk)
 
   switch (brk->get_event()) //Modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH: case brkWXREG:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: /*case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3:*/ case brkWXREG:
       //e= 'W';
       op= new cl_write_operator(cell, addr, cell->get_data(), cell->get_mask(),
 				uc, brk);
       break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH: case brkRXREG:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: /*case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: */case brkRXREG:
       //e= 'R';
       op= new cl_read_operator(cell, addr, cell->get_data(), cell->get_mask(),
 			       uc, brk);
@@ -1095,8 +1158,8 @@ cl_address_space::del_brk(t_addr addr, class cl_brk *brk)
 
   switch (brk->get_event()) //modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASH: case brkWXREG:
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASH: case brkRXREG:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: /*case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: */case brkWXREG:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: /*case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: */case brkRXREG:
       cell->del_operator(brk);
       break;
     case brkNONE:
