@@ -705,7 +705,7 @@ cl_dummy_cell::set(t_mem val)
 
 
 /*
- *                                                                Address space
+ *                              Address space
  */
 
 cl_address_space::cl_address_space(char *id, t_addr astart, t_addr asize, 
@@ -721,7 +721,7 @@ cl_address_space::cl_address_space(char *id, t_addr astart, t_addr asize,
       cells[i]= new cl_memory_cell();
       cells[i]->init();
     }
-  fprintf(stderr,"Memory ID: %s\n", this->name);
+  //  fprintf(stderr,"Created memory ID: %s\n", this->name);
   dummy= new cl_dummy_cell();
 }
 
@@ -738,7 +738,7 @@ cl_address_space::cl_address_space(char *id, t_addr astart, t_addr asize,
       cells[i]= new cl_memory_cell();
       cells[i]->init();
     }
-  fprintf(stderr,"Memory ID: %s\n", this->name);
+  //fprintf(stderr,"Created address space ID: %s\n", this->name);
   dummy= new cl_dummy_cell();
 }
 
@@ -781,37 +781,57 @@ t_mem
 cl_address_space::read(t_addr addr)
 {
   t_addr idx= addr-start_address;
-  if (idx >= size ||
-      addr < start_address)
+
+  class cl_memory *sfr = uc->memory("sfr");
+  class cl_memory *rom = uc->memory("rom");
+  class cl_memory *xram = uc->memory("xram");
+
+  /*if ((asname == rom->get_name())||(asname == flashbank0->get_name())){
+    fprintf(stderr, "idx: 0x%02x\tsize of %s:0x%02x.\n", idx, get_name(), size);
+    }*/
+
+  char *asname = get_name();
+  if (asname == rom->get_name()){
+    class cl_memory *flashbank0 = uc->memory("flashbank0");
+    class cl_memory *flashbank1 = uc->memory("flashbank1");
+    class cl_memory *flashbank2 = uc->memory("flashbank2");
+    class cl_memory *flashbank3 = uc->memory("flashbank3");
+  
+    if (idx < 0x8000)
+      return(flashbank0->read(idx));
+    else {
+      int fmap = sfr->read(FMAP) & 0x07;
+      idx %= 0x8000;
+      switch (fmap)
+	{
+	case 0:
+	  return(flashbank0->read(idx));
+	case 1:
+	  return(flashbank1->read(idx));
+	case 2:
+	  return(flashbank2->read(idx));
+	case 3:
+	  return(flashbank3->read(idx));
+	default:
+	  fprintf(stderr, "Invalid fmap value.\n");
+	  return(cells[idx]->read());
+	}
+    }
+  }
+  else if (asname == xram->get_name())
+    {
+      class cl_memory *sram = uc->memory("sram");
+      if (idx < 0x2000)
+	return(sram->read(idx));
+      else
+	return(cells[idx]->read());
+    }
+  else if (idx >= size ||
+	   addr < start_address)
     {
       err_inv_addr(addr);
       return(dummy->read());
     }
-  char *asname = get_name();
-  class cl_memory *flashbank0 = uc->memory("flashbank0");
-  class cl_memory *flashbank1 = uc->memory("flashbank1");
-  class cl_memory *flashbank2 = uc->memory("flashbank2");
-  class cl_memory *flashbank3 = uc->memory("flashbank3");
-  class cl_memory *sfr = uc->memory("sfr");
-  class cl_memory *rom = uc->memory("rom");
-
-  if (asname == rom->get_name()){
-    int fmap = sfr->read(FMAP) & 0x07;
-    switch (fmap)
-      {
-      case 0:
-	return(flashbank0->read(idx));
-      case 1:
-	return(flashbank1->read(idx));
-      case 2:
-	return(flashbank2->read(idx));
-      case 3:
-	return(flashbank3->read(idx));
-      default:
-	fprintf(stderr, "Invalid fmap value.\n");
-      return(cells[idx]->read());
-      }
-  }
   else
     return(cells[idx]->read());
 }
@@ -839,6 +859,7 @@ cl_address_space::get(t_addr addr)
   class cl_memory *flashbank3 = uc->memory("flashbank3");
   class cl_memory *sfr = uc->memory("sfr");
   class cl_memory *rom = uc->memory("rom");
+  class cl_memory *xram = uc->memory("xram");
 
   t_addr idx= addr-start_address;
 
@@ -864,6 +885,14 @@ cl_address_space::get(t_addr addr)
 	}
     }
   }
+  else if (asname == xram->get_name())
+    {
+      class cl_memory *sram = uc->memory("sram");
+      if (idx < 0x2000)
+	return(sram->get(idx));
+      else
+	return(cells[idx]->get());
+    }
   else {
     if (idx >= size ||
 	addr < start_address)
@@ -880,6 +909,8 @@ cl_address_space::get(t_addr addr)
 t_mem
 cl_address_space::write(t_addr addr, t_mem val)
 {
+  char *asname = get_name();
+  class cl_memory *xram = uc->memory("xram");
   t_addr idx= addr-start_address;
   if (idx >= size ||
       addr < start_address)
@@ -887,13 +918,25 @@ cl_address_space::write(t_addr addr, t_mem val)
       err_inv_addr(addr);
       return(dummy->write(val));
     }
+  else if (asname == xram->get_name())
+    {
+      class cl_memory *sram = uc->memory("sram");
+      if (idx < 0x2000)
+	return(sram->write(idx, val));
+      else
+	return(cells[idx]->write(val));
+    }
   return(cells[idx]->write(val));
 }
 
 void
 cl_address_space::set(t_addr addr, t_mem val)
 {
+  char *asname = get_name();
+  class cl_memory *xram = uc->memory("xram");
+  class cl_memory *sram = uc->memory("sram");
   t_addr idx= addr-start_address;
+
   if (idx >= size ||
       addr < start_address)
     {
@@ -901,7 +944,15 @@ cl_address_space::set(t_addr addr, t_mem val)
       dummy->set(val);
       return;
     }
-  cells[idx]->set(val);
+  else if (asname == xram->get_name())
+    {
+      if (idx < 0x2000)
+	sram->set(idx, val);
+      else
+	cells[idx]->set(val);
+    }
+  else
+    cells[idx]->set(val);
 }
 
 t_mem
@@ -1124,12 +1175,12 @@ cl_address_space::set_brk(t_addr addr, class cl_brk *brk)
 
   switch (brk->get_event()) //Modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: /*case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3:*/ case brkWXREG:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: case brkWSRAM:
       //e= 'W';
       op= new cl_write_operator(cell, addr, cell->get_data(), cell->get_mask(),
 				uc, brk);
       break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: /*case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: */case brkRXREG:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: case brkRSRAM:
       //e= 'R';
       op= new cl_read_operator(cell, addr, cell->get_data(), cell->get_mask(),
 			       uc, brk);
@@ -1158,8 +1209,8 @@ cl_address_space::del_brk(t_addr addr, class cl_brk *brk)
 
   switch (brk->get_event()) //modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: /*case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: */case brkWXREG:
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: /*case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: */case brkRXREG:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: case brkWSRAM:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: case brkRSRAM:
       cell->del_operator(brk);
       break;
     case brkNONE:

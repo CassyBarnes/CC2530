@@ -403,11 +403,7 @@ cl_51core::inst_movx_a_Sdptr(uchar code)
 {
   t_mem d;
   #ifdef CC2530
-  if ((sfr->read(DPH)>=0x60) && (sfr->read(DPH)<= 0x63)){
-    TRACE();
-    d=xreg->read(sfr->read(DPH)*256 + sfr->read(DPL));
-  }
-  else if (sfr->read(DPH)==0x1F){
+  if (sfr->read(DPH)==0x1F){
     d=iram->read(sfr->read(DPH)*256 + sfr->read(DPL));
   }
   else if ((sfr->read(DPH)==0x70) && (sfr->read(DPL)>= 0x80)){
@@ -441,11 +437,7 @@ cl_51core::inst_movx_a_Sri(uchar code)
 
 #ifdef CC2530
   mpage= sfr->read(MPAGE);
-  if (mpage>=0x60 && mpage<=0x63){
-    acc->write(xreg->read(mpage*256 + d));
-    TRACE();
-  } 
-  else if (mpage==0x1F){
+  if (mpage==0x1F){
     acc->write(iram->read(mpage*256 + d));
     TRACE();
   }
@@ -535,10 +527,7 @@ cl_51core::inst_movx_Sdptr_a(uchar code)
 #ifdef CC2530
   TRACE();
   t_addr dp = sfr->read(DPH)*256 + sfr->read(DPL);
-  if ((sfr->read(DPH)>=0x60) && (sfr->read(DPH)<= 0x63)){
-    xreg->write(dp, acc->read());
-  } 
-  else if (sfr->read(DPH)==0x1F){
+  if (sfr->read(DPH)==0x1F){
     iram->write(dp, acc->read());
   }
   else if ((sfr->read(DPH)==0x70) && (sfr->read(DPL)>= 0x80)){
@@ -572,10 +561,7 @@ cl_51core::inst_movx_Sri_a(uchar code)
 #ifdef CC2530
   TRACE();
   mpage=sfr->read(MPAGE);
-  if ((mpage >= 0x60) && (mpage <= 0x63)) {
-    xreg->write(mpage*256 + d, acc->read());
-  }
-  else if ((mpage == 0x70) && (d >= 0x80)) {
+  if ((mpage == 0x70) && (d >= 0x80)) {
     sfr->write(mpage*256 + d, acc->read());
   }
   else if (mpage == 0x1F) {

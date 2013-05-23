@@ -59,7 +59,7 @@ int
 cl_xa::init(void)
 {
   cl_uc::init(); /* Memories now exist */
-  ram= address_space(MEM_XRAM_ID);
+  ram= address_space(MEM_XRAM_ID);//->SRAM
   rom= address_space(MEM_ROM_ID);
 
   /* set SCR to osc/4, native XA mode, flat 24 */

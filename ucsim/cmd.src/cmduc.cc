@@ -27,6 +27,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include <string>
 
+#include "../s51.src/regs51.h"
+
 // prj
 #include "globals.h"
 #include "utils.h"
@@ -38,7 +40,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "cmduccl.h"
 using namespace std;
 
-#define XREG_START_ADDR 0x6000
+
 
 /*
  * Command: state
@@ -228,17 +230,16 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
   // 3. Dump a memory:
 
   // 3.0 Debug message
-  {
+  /*  {
     string fname;
     fname = cmdline->param(0)->get_svalue();
     fprintf(stderr, "memory: %s\n", fname.c_str());
-  }
+    }*/
 
   // 3.1 Define the interval to print, depending on arguments of dump command:
   t_addr d_start = 0;
   t_addr d_end   = 0;
   long   bpl   = 8;
-
   mem  = params[0]->value.memory.memory;
 
   if (cmdline->syntax_match(uc, MEMORY)) {
@@ -260,30 +261,55 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
     return(DD_FALSE);
   }
 
-  class cl_memory * tab[3];
-  tab[0] = uc->memory("xreg");
-  tab[1] = uc->memory("sfr");
-  tab[2] = uc->memory("iram");
-  // tab[3] = uc->memory("xreg");
-
   class cl_memory *xram = uc->memory("xram");
+  class cl_memory *rom = uc->memory("rom");
+  class cl_memory *sfr = uc->memory("sfr");
 
   if (mem == xram) {
     int i;
     int tab_size;
-    tab_size=(sizeof tab)/(sizeof(cl_memory *)); 
+    int count_no_intersect = 0;
+
+    class cl_memory * tab[3];
+    tab[0] = uc->memory("sfr");
+    tab[1] = uc->memory("iram");
+
+    tab_size=(sizeof tab)/(sizeof(cl_memory *));
+
+    int memctr = sfr->read(MCON) & 0x07;
+    switch (memctr)
+      {
+      case 0:
+	tab[2]= uc->memory("flashbank0");
+	break;
+      case 1:
+	tab[2]= uc->memory("flashbank1");
+	break;
+      case 2:
+	tab[2]= uc->memory("flashbank2");
+	break;
+      case 3:
+	tab[2]= uc->memory("flashbank3");
+	break;
+      default:
+	tab[2]= uc->memory("flashbank0");
+	break;
+      }
+    fprintf(stderr,"The flashbank mapped to xram is %s.\n", tab[2]->name);
+ 
     for (i=0; i<tab_size; i++){
-      // 1. Check whether there is an intersection with xregs, sfr, iram (=data):
+
+      // 1. Check whether there is an intersection with flash, sfr, iram (=data):
       t_addr r_start = tab[i]->xram_offset + tab[i]->start_address;
       t_addr r_end   = tab[i]->xram_offset + tab[i]->start_address + tab[i]->size;
       t_addr offset  =  tab[i]->xram_offset;//used for sfr and iram
 
       if (has_intersection(d_start, d_end, r_start, r_end)) {
-
 	if ((d_start <= r_start) && (d_end >= r_start) && (d_end <= r_end)) {
 	  fprintf(stderr,"Dump of xram (including beginning of %s).\n", tab[i]->name);
 	  xram->dump(d_start, r_start-1, bpl, con);
-	  fprintf(stderr,"\n*******Beginning of %s section of xram.*******\n\n",tab[i]->name);
+	  fprintf(stderr,"\n*******Beginning of %s section of xram.*******\n\n",
+		  tab[i]->name);
 	  tab[i]->dump(r_start - offset, d_end - offset, bpl, con);
 	}
 	else if ((d_end >= r_start) && (d_end <= r_end) && 
@@ -294,20 +320,38 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
 	else if ((d_end >= r_end) && (d_start <= r_start)) {
 	  fprintf(stderr,"Dump of xram (including the %s section).\n", tab[i]->name);
 	  xram->dump(d_start, r_start-1, bpl, con);
-	  fprintf(stderr,"\n*******Beginning of %s section of xram.*******\n\n",tab[i]->name);
+	  fprintf(stderr,"\n*******Beginning of %s section of xram.*******\n\n",
+		  tab[i]->name);
 	  tab[i]->dump(r_start - offset, r_end - offset, bpl, con);
-	  fprintf(stderr,"\n*******End of %s section of xram.*******\n\n",tab[i]->name);
+	  fprintf(stderr,"\n*******End of %s section of xram.*******\n\n",
+		  tab[i]->name);
 	  xram->dump(r_end, d_end, bpl, con);
 	}
 	else if ((d_end >= r_end) && (d_start >= r_start) && (d_start <= r_end)) {
 	  fprintf(stderr,"Dump of xram (including end of %s).\n", tab[i]->name);
 	  tab[i]->dump(d_start - offset, r_end - offset, bpl, con);
-	  fprintf(stderr,"\n*******End of %s section of xram.*******\n\n",tab[i]->name); 
+	  fprintf(stderr,"\n*******End of %s section of xram.*******\n\n",
+		  tab[i]->name); 
  	  xram->dump(r_end, d_end, bpl, con);
 	}
       }
+      else {
+	//used for case where there has been no intersection 
+	//of dump section with any specific parts of the xram
+	count_no_intersect++;
+      }
     }
-  } else {
+    if (count_no_intersect == tab_size){
+      mem->dump(d_start, d_end, bpl, con);
+    }
+  }
+  else if(mem == rom){
+    int fmap = sfr->read(FMAP) & 0x07;
+    fprintf(stderr,"The flashbank mapped to the upper part of rom is flashbank%d\n",
+	    fmap); 
+    mem->dump(d_start, d_end, bpl, con);    
+  }
+  else {
     mem->dump(d_start, d_end, bpl, con);
   }
   return(DD_FALSE);

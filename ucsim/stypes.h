@@ -126,7 +126,7 @@ enum mem_class
   MEM_DUMMY,
   MEM_IXRAM,
   MEM_TYPES,
-  MEM_XREG,//added by Calypso for cc2530
+  MEM_SRAM,//added by Calypso for cc2530
   MEM_FLASHBANK0, //added by Calypso for cc2530
   MEM_FLASHBANK1,
   MEM_FLASHBANK2,
@@ -142,7 +142,7 @@ enum mem_class
 #define MEM_FLASHBANK1_ID	"flashbank1"
 #define MEM_FLASHBANK2_ID	"flashbank2"
 #define MEM_FLASHBANK3_ID	"flashbank3"
-#define MEM_XREG_ID	"xreg" //added by Calypso for cc2530
+#define MEM_SRAM_ID	"sram" //added by Calypso for cc2530
 
 // States of simulator
 #define SIM_NONE	0
@@ -202,10 +202,16 @@ enum brk_event
   brkRIRAM,	/* ri */
   brkWSFR,	/* ws */
   brkRSFR,	/* rs */
-  brkWFLASH, //added by Calypso for cc2530
-  brkRFLASH, //added by Calypso for cc2530
-  brkWXREG,  //added by Calypso for cc2530
-  brkRXREG,  //added by Calypso for cc2530
+  brkWFLASHBANK0,
+  brkRFLASHBANK0, //added by Calypso for cc2530
+  brkWFLASHBANK1,
+  brkRFLASHBANK1,
+  brkWFLASHBANK2,
+  brkRFLASHBANK2,
+  brkWFLASHBANK3,
+  brkRFLASHBANK3,
+  brkWSRAM,  //added by Calypso for cc2530
+  brkRSRAM,  //added by Calypso for cc2530
   brkREAD,
   brkWRITE,
   brkACCESS

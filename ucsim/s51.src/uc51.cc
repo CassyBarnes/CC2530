@@ -226,7 +226,7 @@ cl_51core::make_memories(void)
   as->init();
   address_spaces->add(as);
   /*added by Calypso for CC2530*/
-  flashbank0= as= new cl_address_space(MEM_FLASHBANK0_ID, 0, 0x8000, 8, 0);
+  flashbank0= as= new cl_address_space(MEM_FLASHBANK0_ID, 0, 0x8000, 8, 0x8000);
   as->init();
   address_spaces->add(as);
   flashbank1= as= new cl_address_space(MEM_FLASHBANK1_ID, 0, 0x8000, 0x8000);
@@ -238,7 +238,7 @@ cl_51core::make_memories(void)
   flashbank3= as= new cl_address_space(MEM_FLASHBANK3_ID, 0, 0x8000, 0x8000);
   as->init();
   address_spaces->add(as);
-  xreg= as= new cl_address_space(MEM_XREG_ID, 0x6000, 0x400, 8, 0);
+  sram= as= new cl_address_space(MEM_SRAM_ID, 0x00, 0x2000, 8, 0);
   as->init();
   address_spaces->add(as);
   /* ******************************* */
@@ -293,11 +293,11 @@ cl_51core::make_memories(void)
   as->decoders->add(ad);
   ad->activate(0);
 
-  chip= new cl_memory_chip("xreg_chip", 0x400, 8);
+  chip= new cl_memory_chip("sram_chip", 0x2000, 8);
   chip->init();
   memchips->add(chip);
-  ad= new cl_address_decoder(as= xreg/*address_space(MEM_XREG_ID)*/,
-			     chip, 0x6000, 0x63ff, 0);
+  ad= new cl_address_decoder(as= sram/*address_space(MEM_XREG_ID)*/,
+			     chip, 0x0000, 0x2000, 0);
   ad->init();
   as->decoders->add(ad);
   ad->activate(0);
@@ -486,10 +486,8 @@ cl_51core::print_regs(class cl_console *con)
  con->dd_printf("  ACC= 0x%02x %3d %c  B= 0x%02x", sfr->get(ACC), sfr->get(ACC),
 		isprint(sfr->get(ACC))?(sfr->get(ACC)):'.', sfr->get(B)); 
  address=sfr->get(DPH)*256+sfr->get(DPL);
- if (address > 0x5FFF && address < 0x6400)
-   data= xreg->get(address);
- else
-   data= xram->get(address);
+
+ data= xram->get(address);
  con->dd_printf("  DPTR= 0x%02x%02x @DPTR= 0x%02x %3d %c\n", sfr->get(DPH),
 		sfr->get(DPL), data, data, isprint(data)?data:'.');
   
@@ -721,12 +719,10 @@ cl_51core::tick(int cycles)
  */
 
 class cl_memory_cell *
-cl_51core::get_direct(t_mem addr)//Modified by Calypso for xreg access
+cl_51core::get_direct(t_mem addr)//Modified by Calypso
 {
   if (addr < sfr->start_address)
     return(iram->get_cell(addr));
-  else if (addr > (sfr->start_address + sfr->size))
-    return(xreg->get_cell(addr));
   else
     return(sfr->get_cell(addr));
 }

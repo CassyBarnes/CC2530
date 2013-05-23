@@ -1498,22 +1498,6 @@ cl_uc::fetch(void)
   if (!rom)
     return(0);
 
-  /* int fmap = FMAP & 0x07;
-    switch (fmap)
-    {
-    case 0x0:
-      code= xreg->read(PC);
-      break;
-    case 0x1:
-      code= flashbank1->read(PC);
-      break;
-    case 0x2:
-      code= flashbank2->read(PC);
-      break;
-    case 0x3:
-      code= flashbank3->read(PC);
-      break;
-      }*/
   code= rom->read(PC);
   PC= rom->inc_address(PC);
   return(code);
