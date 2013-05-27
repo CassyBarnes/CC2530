@@ -196,7 +196,7 @@ cl_memory::dump(t_addr start, t_addr stop, int bpl, class cl_console *con)
 	     (start+i <= stop);
 	   i++)
 	{
-	  con->dd_printf(data_format, read/*get*/(start+i)); con->dd_printf(" ");
+	  con->dd_printf(data_format, get(start+i)); con->dd_printf(" ");
 	}
       while (i < bpl)
 	{
@@ -785,44 +785,73 @@ cl_address_space::read(t_addr addr)
   class cl_memory *sfr = uc->memory("sfr");
   class cl_memory *rom = uc->memory("rom");
   class cl_memory *xram = uc->memory("xram");
-
-  /*if ((asname == rom->get_name())||(asname == flashbank0->get_name())){
-    fprintf(stderr, "idx: 0x%02x\tsize of %s:0x%02x.\n", idx, get_name(), size);
-    }*/
-
+  class cl_memory *sram = uc->memory("sram");
+  class cl_memory *iram = uc->memory("iram");
+  class cl_memory *flashbank0 = uc->memory("flashbank0");
+  class cl_memory *flashbank1 = uc->memory("flashbank1");
+  class cl_memory *flashbank2 = uc->memory("flashbank2");
+  class cl_memory *flashbank3 = uc->memory("flashbank3");
   char *asname = get_name();
-  if (asname == rom->get_name()){
-    class cl_memory *flashbank0 = uc->memory("flashbank0");
-    class cl_memory *flashbank1 = uc->memory("flashbank1");
-    class cl_memory *flashbank2 = uc->memory("flashbank2");
-    class cl_memory *flashbank3 = uc->memory("flashbank3");
-  
+ 
+ if (asname == rom->get_name()){
     if (idx < 0x8000)
       return(flashbank0->read(idx));
     else {
       int fmap = sfr->read(FMAP) & 0x07;
+      int execFromSram = sfr->read(MCON) & 0x08;
       idx %= 0x8000;
-      switch (fmap)
+      if ((execFromSram != 0) && (idx < 0x2000))
+	      return(sram->read(idx));
+      else
 	{
-	case 0:
-	  return(flashbank0->read(idx));
-	case 1:
-	  return(flashbank1->read(idx));
-	case 2:
-	  return(flashbank2->read(idx));
-	case 3:
-	  return(flashbank3->read(idx));
-	default:
-	  fprintf(stderr, "Invalid fmap value.\n");
-	  return(cells[idx]->read());
-	}
+	  switch (fmap)
+	    {
+	    case 0:
+	      return(flashbank0->read(idx));
+	    case 1:
+	      return(flashbank1->read(idx));
+	    case 2:
+	      return(flashbank2->read(idx));
+	    case 3:
+	      return(flashbank3->read(idx));
+	    default:
+	      fprintf(stderr, "Invalid fmap value.\n");
+	      return(cells[idx]->read());
+	    }
+	}	  
     }
   }
   else if (asname == xram->get_name())
     {
-      class cl_memory *sram = uc->memory("sram");
       if (idx < 0x2000)
 	return(sram->read(idx));
+      else if ((idx>= 0x7080) && (idx<0x7100))
+	return(sfr->read(idx - sfr->xram_offset));
+      else if (idx>= 0x8000){
+	int memctr = sfr->read(MCON) & 0x07;
+	idx %= 0x8000;
+	  switch (memctr)
+	    {
+	    case 0:
+	      return(flashbank0->read(idx));
+	    case 1:
+	      return(flashbank1->read(idx));
+	    case 2:
+	      return(flashbank2->read(idx));
+	    case 3:
+	      return(flashbank3->read(idx));
+	    default:
+	      fprintf(stderr, "Invalid mcon value.\n");
+	      return(cells[idx]->read());
+	    }
+      }
+      else
+	return(cells[idx]->read());
+    }
+  else if (asname == sram->get_name())
+    {
+      if (idx >= 0x1F00)
+	return(iram->read(idx - iram->xram_offset));
       else
 	return(cells[idx]->read());
     }
@@ -860,6 +889,8 @@ cl_address_space::get(t_addr addr)
   class cl_memory *sfr = uc->memory("sfr");
   class cl_memory *rom = uc->memory("rom");
   class cl_memory *xram = uc->memory("xram");
+  class cl_memory *sram = uc->memory("sram");
+  class cl_memory *iram = uc->memory("iram");
 
   t_addr idx= addr-start_address;
 
@@ -868,28 +899,60 @@ cl_address_space::get(t_addr addr)
       return(flashbank0->get(idx));
     else {
       int fmap = sfr->read(FMAP) & 0x07;
+      int execFromSram = sfr->read(MCON) & 0x08;
       idx %= 0x8000;
-      switch (fmap)
+      if ((execFromSram != 0) && (idx < 0x2000))
+	return(sram->get(idx));
+      else
 	{
-	case 0:
-	  return(flashbank0->get(idx));
-	case 1:
-	  return(flashbank1->get(idx));
-	case 2:
-	  return(flashbank2->get(idx));
-	case 3:
-	  return(flashbank3->get(idx));
-	default:
-	  fprintf(stderr, "Invalid fmap value.\n");
-	  return(cells[idx]->get());
+	  switch (fmap)
+	    {
+	    case 0:
+	      return(flashbank0->get(idx));
+	    case 1:
+	      return(flashbank1->get(idx));
+	    case 2:
+	      return(flashbank2->get(idx));
+	    case 3:
+	      return(flashbank3->get(idx));
+	    default:
+	      fprintf(stderr, "Invalid fmap value.\n");
+	      return(cells[idx]->get());
+	    }
 	}
     }
   }
   else if (asname == xram->get_name())
     {
-      class cl_memory *sram = uc->memory("sram");
       if (idx < 0x2000)
 	return(sram->get(idx));
+      else if ((idx>= 0x7080) && (idx<0x7100))
+	return(sfr->get(idx - sfr->xram_offset));
+      else if (idx>= 0x8000){
+	int memctr = sfr->read(MCON) & 0x07;
+	idx %= 0x8000;
+	switch (memctr)
+	  {
+	  case 0:
+	    return(flashbank0->get(idx));
+	  case 1:
+	    return(flashbank1->get(idx));
+	  case 2:
+	    return(flashbank2->get(idx));
+	  case 3:
+	    return(flashbank3->get(idx));
+	  default:
+	    fprintf(stderr, "Invalid mcon value.\n");
+	    return(cells[idx]->get());
+	  }
+      }
+      else
+	return(cells[idx]->get());
+    }
+  else if (asname == sram->get_name())
+    {
+      if (idx >= 0x1F00)
+	return(iram->get(idx - iram->xram_offset));
       else
 	return(cells[idx]->get());
     }
@@ -898,7 +961,6 @@ cl_address_space::get(t_addr addr)
 	addr < start_address)
       {
 	fprintf(stderr, "addr: 0x%02x\tstart_address: 0x%02x\tidx: 0x%02x\tsize of %s:0x%02x.\n", addr, start_address, idx, get_name(), size);
-	fprintf(stderr, "Erreur fatale.\n");
 	err_inv_addr(addr);
 	return(dummy->get());
       }
@@ -909,8 +971,15 @@ cl_address_space::get(t_addr addr)
 t_mem
 cl_address_space::write(t_addr addr, t_mem val)
 {
-  char *asname = get_name();
+  class cl_memory *sram = uc->memory("sram");
+  class cl_memory *iram = uc->memory("iram");
   class cl_memory *xram = uc->memory("xram");
+  class cl_memory *flashbank0 = uc->memory("flashbank0");
+  class cl_memory *flashbank1 = uc->memory("flashbank1");
+  class cl_memory *flashbank2 = uc->memory("flashbank2");
+  class cl_memory *flashbank3 = uc->memory("flashbank3");
+  class cl_memory *sfr = uc->memory("sfr");
+  char *asname = get_name();
   t_addr idx= addr-start_address;
   if (idx >= size ||
       addr < start_address)
@@ -920,9 +989,35 @@ cl_address_space::write(t_addr addr, t_mem val)
     }
   else if (asname == xram->get_name())
     {
-      class cl_memory *sram = uc->memory("sram");
       if (idx < 0x2000)
 	return(sram->write(idx, val));
+      else if (idx >= 0x7080 && idx < 0x7100)
+	return(sfr->write(idx - sfr->xram_offset, val));
+      else if (idx >= 0x8000){
+	int memctr = sfr->read(MCON) & 0x07;
+	idx %= 0x8000;
+	switch (memctr)
+	  {
+	  case 0:
+	    return(flashbank0->write(idx, val));
+	  case 1:
+	    return(flashbank1->write(idx, val));
+	  case 2:
+	    return(flashbank2->write(idx, val));
+	  case 3:
+	    return(flashbank3->write(idx, val));
+	  default:
+	    fprintf(stderr, "Invalid mcon value.\n");
+	    return(cells[idx]->write(val));
+	  }
+      }
+      else
+	return(cells[idx]->write(val));
+    }
+  else if (asname == sram->get_name())
+    {
+      if (idx >= 0x1F00)
+	return(iram->write(idx - iram->xram_offset, val));
       else
 	return(cells[idx]->write(val));
     }
@@ -935,6 +1030,12 @@ cl_address_space::set(t_addr addr, t_mem val)
   char *asname = get_name();
   class cl_memory *xram = uc->memory("xram");
   class cl_memory *sram = uc->memory("sram");
+  class cl_memory *iram = uc->memory("iram");
+  class cl_memory *flashbank0 = uc->memory("flashbank0");
+  class cl_memory *flashbank1 = uc->memory("flashbank1");
+  class cl_memory *flashbank2 = uc->memory("flashbank2");
+  class cl_memory *flashbank3 = uc->memory("flashbank3");
+  class cl_memory *sfr = uc->memory("sfr");
   t_addr idx= addr-start_address;
 
   if (idx >= size ||
@@ -948,6 +1049,33 @@ cl_address_space::set(t_addr addr, t_mem val)
     {
       if (idx < 0x2000)
 	sram->set(idx, val);
+      else if (idx >= 0x7080 && idx < 0x7100)
+	sfr->set(idx - sfr->xram_offset, val);
+      else if (idx >= 0x8000){
+	int memctr = sfr->read(MCON) & 0x07;
+	idx %= 0x8000;
+	switch (memctr)
+	  {
+	  case 0:
+	    flashbank0->set(idx, val);
+	  case 1:
+	    flashbank1->set(idx, val);
+	  case 2:
+	    flashbank2->set(idx, val);
+	  case 3:
+	    flashbank3->set(idx, val);
+	  default:
+	    fprintf(stderr, "Invalid mcon value.\n");
+	    cells[idx]->set(val);
+	  }
+      }
+      else
+	cells[idx]->set(val);
+    }
+  else if (asname == sram->get_name())
+    {
+      if (idx >= 0x1F00)
+	iram->set(idx - iram->xram_offset, val);
       else
 	cells[idx]->set(val);
     }

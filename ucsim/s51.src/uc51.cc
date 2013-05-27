@@ -216,7 +216,7 @@ cl_51core::make_memories(void)
   rom= as= new cl_address_space(MEM_ROM_ID/*"rom"*/, 0, 0x10000, 8);
   as->init();
   address_spaces->add(as);
-  iram= as= new cl_address_space(MEM_IRAM_ID/*"iram"*/, 0, 0x80, 8, 0x1F00);
+  iram= as= new cl_address_space(MEM_IRAM_ID/*"iram"*/, 0, 0x100, 8, 0x1F00);
   as->init();
   address_spaces->add(as);
   sfr= as= new cl_address_space(MEM_SFR_ID/*"sfr"*/, 0x80, 0x80, 8, 0x7000);
@@ -241,6 +241,7 @@ cl_51core::make_memories(void)
   sram= as= new cl_address_space(MEM_SRAM_ID, 0x00, 0x2000, 8, 0);
   as->init();
   address_spaces->add(as);
+
   /* ******************************* */
 
   class cl_address_decoder *ad;
@@ -255,7 +256,7 @@ cl_51core::make_memories(void)
   as->decoders->add(ad);
   ad->activate(0);
 
-  chip= new cl_memory_chip("iram_chip", 0x80, 8);
+  chip= new cl_memory_chip("iram_chip", 0x100, 8);
   chip->init();
   memchips->add(chip);
   ad= new cl_address_decoder(as= iram/*address_space(MEM_IRAM_ID)*/,

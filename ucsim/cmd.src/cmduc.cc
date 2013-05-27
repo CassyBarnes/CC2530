@@ -270,9 +270,10 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
     int tab_size;
     int count_no_intersect = 0;
 
-    class cl_memory * tab[3];
+    class cl_memory * tab[4];
     tab[0] = uc->memory("sfr");
-    tab[1] = uc->memory("iram");
+    tab[1] = uc->memory("sram");
+    tab[2] = uc->memory("iram");
 
     tab_size=(sizeof tab)/(sizeof(cl_memory *));
 
@@ -280,29 +281,34 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
     switch (memctr)
       {
       case 0:
-	tab[2]= uc->memory("flashbank0");
+	tab[3]= uc->memory("flashbank0");
 	break;
       case 1:
-	tab[2]= uc->memory("flashbank1");
+	tab[3]= uc->memory("flashbank1");
 	break;
       case 2:
-	tab[2]= uc->memory("flashbank2");
+	tab[3]= uc->memory("flashbank2");
 	break;
       case 3:
-	tab[2]= uc->memory("flashbank3");
+	tab[3]= uc->memory("flashbank3");
 	break;
       default:
-	tab[2]= uc->memory("flashbank0");
+	tab[3]= uc->memory("flashbank0");
 	break;
       }
-    fprintf(stderr,"The flashbank mapped to xram is %s.\n", tab[2]->name);
+    fprintf(stderr,"The flashbank mapped to xram is %s.\n", tab[3]->name);
  
     for (i=0; i<tab_size; i++){
 
       // 1. Check whether there is an intersection with flash, sfr, iram (=data):
       t_addr r_start = tab[i]->xram_offset + tab[i]->start_address;
       t_addr r_end   = tab[i]->xram_offset + tab[i]->start_address + tab[i]->size;
-      t_addr offset  =  tab[i]->xram_offset;//used for sfr and iram
+ 
+
+      //    fprintf(stderr,"Case of %s, start 0x%02x, end 0x%02x, offset 0x%02x\n",
+      //	      tab[i]->name, r_start, r_end, offset);
+      if (i==1) 
+	r_end = r_end - 0x100;//sram case (sram_end-100 is beginning of iram)
 
       if (has_intersection(d_start, d_end, r_start, r_end)) {
 	if ((d_start <= r_start) && (d_end >= r_start) && (d_end <= r_end)) {
@@ -310,29 +316,31 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
 	  xram->dump(d_start, r_start-1, bpl, con);
 	  fprintf(stderr,"\n*******Beginning of %s section of xram.*******\n\n",
 		  tab[i]->name);
-	  tab[i]->dump(r_start - offset, d_end - offset, bpl, con);
+	  xram->dump(r_start, d_end, bpl, con);
 	}
 	else if ((d_end >= r_start) && (d_end <= r_end) && 
 		 (d_start >= r_start) && (d_start <= r_end)) {
 	  fprintf(stderr,"Dumping part of %s section of xram.\n", tab[i]->name); 
-	  tab[i]->dump(d_start - offset, d_end - offset, bpl, con);
+	  xram->dump(d_start, d_end, bpl, con);
 	}
 	else if ((d_end >= r_end) && (d_start <= r_start)) {
 	  fprintf(stderr,"Dump of xram (including the %s section).\n", tab[i]->name);
 	  xram->dump(d_start, r_start-1, bpl, con);
 	  fprintf(stderr,"\n*******Beginning of %s section of xram.*******\n\n",
 		  tab[i]->name);
-	  tab[i]->dump(r_start - offset, r_end - offset, bpl, con);
+	  xram->dump(r_start, r_end, bpl, con);
 	  fprintf(stderr,"\n*******End of %s section of xram.*******\n\n",
 		  tab[i]->name);
-	  xram->dump(r_end, d_end, bpl, con);
+	  //xram->dump(r_end, d_end, bpl, con);
+	  d_start = r_end;
 	}
 	else if ((d_end >= r_end) && (d_start >= r_start) && (d_start <= r_end)) {
 	  fprintf(stderr,"Dump of xram (including end of %s).\n", tab[i]->name);
-	  tab[i]->dump(d_start - offset, r_end - offset, bpl, con);
+	  xram->dump(d_start, r_end - 1, bpl, con);
 	  fprintf(stderr,"\n*******End of %s section of xram.*******\n\n",
 		  tab[i]->name); 
- 	  xram->dump(r_end, d_end, bpl, con);
+ 	  //xram->dump(r_end, d_end, bpl, con);
+	  d_start = r_end;
 	}
       }
       else {
