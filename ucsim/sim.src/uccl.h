@@ -92,6 +92,7 @@ public:
   int inst_ticks;		// ticks of an instruction
   double xtal;			// Clock speed
 
+
   int brk_counter;		// Number of breakpoints
   class brk_coll *fbrk;		// Collection of FETCH break-points
   class brk_coll *ebrk;		// Collection of EVENT breakpoints

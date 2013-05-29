@@ -104,7 +104,10 @@
 #define RFST	0XE1
 #define T1CNTL	0XE2
 #define T1CNTH	0XE3
+
 #define T1CTL	0XE4
+//#define T1CTL.MODE 	0XE4
+
 #define T1CCTL0	0XE5
 #define T1CCTL1	0XE6
 #define T1CCTL2	0XE7
@@ -132,5 +135,38 @@
 #define P0DIR	0XFD
 #define P1DIR	0XFE
 #define P2DIR	0XFF
+
+/* Bit masks in T1CCTL0 */
+/*
+#define bmECOM0	0x40
+#define bmCAPP0	0x20
+#define bmCAPN0	0x10
+#define bmMAT0	0x08
+#define bmTOG0	0x04
+#define bmPWM0	0x02
+#define bmECCF0	0x01*/
+
+/* Bit masks in T1CTL */
+#define bmM0	0x01
+#define bmM1	0x02
+#define bmDIV	0x0C
+
+/* Bit masks in IEN1 */
+
+#define bmP0IE	0x20
+#define bmT4IE	0x10
+#define bmT3IE	0x08
+#define bmT2IE	0x04
+#define bmT1IE	0x02
+#define bmDMAIE	0x01
+
+/* Bit masks in T1STAT */
+
+#define bmOVFIF	0x20
+#define bmCH4IF	0x10
+#define bmCH3IF	0x08
+#define bmCH2IF	0x04
+#define bmCH1IF	0x02
+#define bmCH0IF	0x01
 
 #endif

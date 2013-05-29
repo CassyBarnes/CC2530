@@ -57,6 +57,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "regs51.h"
 #include "timer0cl.h"
 #include "timer1cl.h"
+#include "CC2530timer1cl.h" 
 #include "serialcl.h"
 #include "portcl.h"
 #include "interruptcl.h"
@@ -147,6 +148,8 @@ cl_51core::mk_hw_elements(void)
   hws->add(h= new cl_timer0(this, 0, "timer0"));
   h->init();
   hws->add(h= new cl_timer1(this, 1, "timer1"));
+  h->init();
+  hws->add(h= new cl_CC2530_timer1(this, 1, "CC2530timer1"));
   h->init();
   hws->add(h= new cl_serial(this));
   h->init();

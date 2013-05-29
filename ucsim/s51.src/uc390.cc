@@ -47,6 +47,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "regs51.h"
 #include "uc390hwcl.h"
 
+#include "CC2530timer1cl.h"
 
 #include "uc52cl.h"
 #include "regs51.h"

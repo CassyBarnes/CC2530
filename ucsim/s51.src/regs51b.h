@@ -219,8 +219,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define bmTF1	0x80
 #define bmTR1	0x40
 #define bmTF0	0x20
-#define bmTR0	0x10
-#define bmIE1	0x08
+#define bmTR0	0x01
+#define bmIE1	0x80
 #define bmIT1	0x04
 #define bmIE0	0x02
 #define bmIT0	0x01
