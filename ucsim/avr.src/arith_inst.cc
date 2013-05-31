@@ -850,6 +850,7 @@ cl_avr::mul_Rd_Rr(t_mem code)
     sreg|= BIT_C;
   ram->write(SREG, sreg);
   tick(1);
+
   return(resGO);
 }
 

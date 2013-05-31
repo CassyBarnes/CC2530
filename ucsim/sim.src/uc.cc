@@ -63,7 +63,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
  * Clock counter
  */
 
-cl_ticker::cl_ticker(int adir, int in_isr, char *aname)
+cl_ticker::cl_ticker(class cl_uc *auc, int adir, int in_isr, char *aname)
 {
   options= TICK_RUN;
   if (in_isr)
@@ -71,6 +71,7 @@ cl_ticker::cl_ticker(int adir, int in_isr, char *aname)
   dir= adir;
   ticks= 0;
   set_name(aname);
+  uc=auc;
 }
 
 cl_ticker::~cl_ticker(void) {}
@@ -80,6 +81,7 @@ cl_ticker::tick(int nr)
 {
   if (options&TICK_RUN)
     ticks+= dir*nr;
+
   return(ticks);
 }
 
@@ -145,9 +147,9 @@ cl_uc::cl_uc(class cl_sim *asim):
   //for (i= MEM_ROM; i < MEM_TYPES; i++) mems->add(0);
   xtal_option= new cl_xtal_option(this);
   xtal_option->init();
-  ticks= new cl_ticker(+1, 0, "time");
-  isr_ticks= new cl_ticker(+1, TICK_INISR, "isr");
-  idle_ticks= new cl_ticker(+1, TICK_IDLE, "idle");
+  ticks= new cl_ticker(this, +1, 0, "time");
+  //isr_ticks= new cl_ticker(this, +1, TICK_INISR, "isr");
+  //idle_ticks= new cl_ticker(this, +1, TICK_IDLE, "idle");
   counters= new cl_list(2, 2, "counters");
   it_levels= new cl_list(2, 2, "it levels");
   it_sources= new cl_irqs(2, 2);
@@ -168,8 +170,8 @@ cl_uc::~cl_uc(void)
   delete hws;
   //delete options;
   delete ticks;
-  delete isr_ticks;
-  delete idle_ticks;
+  // delete isr_ticks;
+  // delete idle_ticks;
   delete counters;
   events->disconn_all();
   delete events;
@@ -236,8 +238,8 @@ cl_uc::reset(void)
   instPC= PC= 0;
   state = stGO;
   ticks->ticks= 0;
-  isr_ticks->ticks= 0;
-  idle_ticks->ticks= 0;
+  // isr_ticks->ticks= 0;
+  //  idle_ticks->ticks= 0;
   /*FIXME should we clear user counters?*/
   il= (class it_level *)(it_levels->top());
   while (il &&
@@ -1376,14 +1378,14 @@ cl_uc::tick(int cycles)
 {
   //class cl_hw *hw;
   int i, cpc= clock_per_cycle();
-
+  //fprintf(stderr,"uc tick\n");//Calypso
   // increase time
   ticks->tick(cycles * cpc);
   class it_level *il= (class it_level *)(it_levels->top());
-  if (il->level >= 0)
-    isr_ticks->tick(cycles * cpc);
-  if (state == stIDLE)
-    idle_ticks->tick(cycles * cpc);
+  // if (il->level >= 0)
+    //   isr_ticks->tick(cycles * cpc);
+    //  if (state == stIDLE)
+    //  idle_ticks->tick(cycles * cpc);
   for (i= 0; i < counters->count; i++)
     {
       class cl_ticker *t= (class cl_ticker *)(counters->at(i));

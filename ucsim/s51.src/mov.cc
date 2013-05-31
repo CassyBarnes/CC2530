@@ -41,15 +41,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "uc51cl.h"
 #include "regs51.h"
 
-#define DEBUG
-
-#ifdef DEBUG
-#define TRACE() \
-fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
-#else
-#define TRACE()
-#endif
-
 /*
  * 0x74 2 12 MOV A,#data
  *____________________________________________________________________________
@@ -402,17 +393,8 @@ int
 cl_51core::inst_movx_a_Sdptr(uchar code)
 {
   t_mem d;
-  #ifdef CC2530
-  if ((sfr->read(DPH)==0x70) && (sfr->read(DPL)>= 0x80)){
-    d=sfr->read(sfr->read(DPH)*256 + sfr->read(DPL));
-  }
-  else{
-    d=xram->read(sfr->read(DPH)*256 + sfr->read(DPL));
-  }
-  #endif
-  #ifndef CC2530
+
   d=xram->read(sfr->read(DPH)*256 + sfr->read(DPL));
-  #endif
   acc->write(d);
   tick(1);
   return(resGO);

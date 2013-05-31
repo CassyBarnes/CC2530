@@ -191,8 +191,10 @@ cl_timer0::do_mode0(int cycles)
   //t_mem p3= uc->mem(MEM_SFR)->get(P3);
   if (GATE)
     {
-      if ((/*p3 & mask_*/INT) == 0)
+      if ((/*p3 & mask_*/INT) == 0) {
+	TRACE();
 	return(0);
+      }
     }
 
   if (C_T)
@@ -204,20 +206,21 @@ cl_timer0::do_mode0(int cycles)
       cycles= T_edge;
       T_edge= 0;
     }
-  while (cycles--)
-    {
+
+  for (int i = cycles; i > 0; i--) {
       // mod 0, TH= 8 bit t/c, TL= 5 bit precounter
-      t_mem tl= cell_tl->add(1);
-      if ((tl & 0x1f) == 0)
-	{
-	  cell_tl->set(0);
-	  if (!cell_th->add(1))
-	    {
-	      cell_tcon->set_bit1(mask_TF);
-	      overflow();
-	    }
-	}
-    }
+    t_mem tl= cell_tl->add(1);
+
+    if ((tl & 0x1f) == 0)
+      {
+	cell_tl->set(0);
+	if (!cell_th->add(1))
+	  {
+	    cell_tcon->set_bit1(mask_TF);
+	    overflow();
+	  }
+      }
+  }
 
   return(0);
 }

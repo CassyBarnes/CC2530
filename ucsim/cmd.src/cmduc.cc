@@ -58,7 +58,7 @@ COMMAND_DO_WORK_UC(cl_state_cmd)
 		 uc->xtal);
   con->dd_printf("Total time since last reset= %g sec (%lu clks)\n",
 		 uc->get_rtime(), uc->ticks->ticks);
-  con->dd_printf("Time in isr = %g sec (%lu clks) %3.2g%%\n",
+  /*con->dd_printf("Time in isr = %g sec (%lu clks) %3.2g%%\n",Calypso
 		 uc->isr_ticks->get_rtime(uc->xtal),
 		 uc->isr_ticks->ticks,
 		 (uc->ticks->ticks == 0)?0.0:
@@ -69,7 +69,7 @@ COMMAND_DO_WORK_UC(cl_state_cmd)
 		 uc->idle_ticks->ticks,
 		 (uc->ticks->ticks == 0)?0.0:
 		 (100.0*((double)(uc->idle_ticks->ticks)/
-			 (double)(uc->ticks->ticks))));
+		 (double)(uc->ticks->ticks))));*/
   con->dd_printf("Max value of stack pointer= 0x%06x, avg= 0x%06x\n",
 		 uc->sp_max, uc->sp_avg);
   return(0);

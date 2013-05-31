@@ -812,6 +812,7 @@ int cl_xa::exec_inst(void)
     return(resBREAKPOINT);
   tick(1);
 
+
 /* the following lookups make for a slow simulation, we will
   figure out how to make it fast later... */
 

@@ -57,7 +57,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "regs51.h"
 #include "timer0cl.h"
 #include "timer1cl.h"
-#include "CC2530timer1cl.h" 
 #include "serialcl.h"
 #include "portcl.h"
 #include "interruptcl.h"
@@ -142,6 +141,8 @@ cl_51core::mk_hw_elements(void)
 {
   class cl_hw *h;
 
+  TRACE();
+
   acc= sfr->get_cell(ACC);
   psw= sfr->get_cell(PSW);
 
@@ -149,8 +150,9 @@ cl_51core::mk_hw_elements(void)
   h->init();
   hws->add(h= new cl_timer1(this, 1, "timer1"));
   h->init();
-  hws->add(h= new cl_CC2530_timer1(this, 1, "CC2530timer1"));
-  h->init();
+  CC2530timer1 = new cl_CC2530_timer1(this, 1, "CC2530timer1");;
+  hws->add(CC2530timer1);
+  h->init();//Calypso
   hws->add(h= new cl_serial(this));
   h->init();
   hws->add(h= new cl_port(this, 0));
@@ -706,13 +708,13 @@ cl_51core::tick_hw(int cycles)
   return(0);
 }*/
 
-/*int
+int
 cl_51core::tick(int cycles)
 {
   cl_uc::tick(cycles);
   //do_hardware(cycles);
   return(0);
-}*/
+}
 
 
 /*

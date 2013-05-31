@@ -38,7 +38,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "brkcl.h"
 #include "stackcl.h"
 
-
 /* Counter to count clock ticks */
 
 #define TICK_RUN	0x01
@@ -52,8 +51,8 @@ public:
   int options; // see TICK_XXX above
   int dir;
   //char *name;
-
-  cl_ticker(int adir, int in_isr, char *aname);
+  class cl_uc *uc;
+  cl_ticker(class cl_uc *auc, int adir, int in_isr, char *aname);
   virtual ~cl_ticker(void);
   
   virtual int tick(int nr);
@@ -84,10 +83,10 @@ public:
   class cl_xtal_option *xtal_option;
 
   t_addr PC, instPC;		// Program Counter
-  bool inst_exec;		// Instruction is executed
+  bool inst_exec;
   class cl_ticker *ticks;	// Nr of XTAL clocks
-  class cl_ticker *isr_ticks;	// Time in ISRs
-  class cl_ticker *idle_ticks;	// Time in idle mode
+  //  class cl_ticker *isr_ticks;	// Time in ISRs
+  // class cl_ticker *idle_ticks;	// Time in idle mode
   class cl_list *counters;	// User definable timers (tickers)
   int inst_ticks;		// ticks of an instruction
   double xtal;			// Clock speed

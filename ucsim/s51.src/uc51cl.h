@@ -41,9 +41,18 @@
 #include "itsrccl.h"
 #include "brkcl.h"
 #include "stypes.h"
+#include "CC2530timer1cl.h" 
 
 #include "interruptcl.h"
 
+#define DEBUG
+
+#ifdef DEBUG
+#define TRACE() \
+fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
+#else
+#define TRACE()
+#endif
 
 class t_uc51;
 
@@ -66,8 +75,16 @@ public:
   bool stop_at_it;
 
   // memories and cells for faster access
-  class cl_address_space *sfr, *iram, *xram, *flashbank0, *flashbank1, *flashbank2, *flashbank3, *sram;//Modif by Calypso for CC2530
+  class cl_address_space *sfr;
+  class cl_address_space *iram;
+  class cl_address_space *xram;
+  class cl_address_space *flashbank0;
+  class cl_address_space *flashbank1;
+  class cl_address_space *flashbank2;
+  class cl_address_space *flashbank3;
+  class cl_address_space *sram;//Modif by Calypso for CC2530
   class cl_memory_cell *acc, *psw;
+  cl_CC2530_timer1  *CC2530timer1;
 
 public:
   // Help to detect external it requests (falling edge)
@@ -94,6 +111,7 @@ public:
   //virtual class cl_m *mk_mem(enum mem_class type, char *class_name);
   virtual void make_memories(void);
 
+  virtual int tick(int cycles);
   virtual int clock_per_cycle(void) { return(12); }
   virtual struct dis_entry *dis_tbl(void);
   virtual struct name_entry *sfr_tbl(void);

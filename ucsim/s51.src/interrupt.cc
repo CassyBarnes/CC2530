@@ -902,7 +902,7 @@ cl_radio::read(class cl_memory_cell *cell)
     fprintf(stderr, "%s:%d  CC2530 radio %s: read of TIMIF\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_RFD){
     fprintf(stderr, "%s:%d CC2530 radio %s: read of RFD\n", __FILE__, __LINE__, __FUNCTION__);}
-  else if (cell == cell_T1CC0L){
+  /*  else if (cell == cell_T1CC0L){
     fprintf(stderr, "%s:%d CC2530 radio %s: read of T1CC0L\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_T1CC0H){
     fprintf(stderr, "%s:%d  CC2530 radio %s: read of T1CC0H\n", __FILE__, __LINE__, __FUNCTION__);}
@@ -913,21 +913,21 @@ cl_radio::read(class cl_memory_cell *cell)
   else if (cell == cell_T1CC2L){
     fprintf(stderr, "%s:%d  CC2530 radio %s: read of T1CC2L\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_T1CC2H){
-    fprintf(stderr, "%s:%d CC2530 radio %s: read of T1CC2H\n", __FILE__, __LINE__, __FUNCTION__);}
+  fprintf(stderr, "%s:%d CC2530 radio %s: read of T1CC2H\n", __FILE__, __LINE__, __FUNCTION__);}*/
   else if (cell == cell_RFST){
     fprintf(stderr, "%s:%d CC2530 radio %s: read of RFST\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_T1CNTL){
     fprintf(stderr, "%s:%d  CC2530 radio %s: read of T1CNTL\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_T1CNTH){
     fprintf(stderr, "%s:%d CC2530 radio %s: read of T1CNTH\n", __FILE__, __LINE__, __FUNCTION__);}
-  else if (cell == cell_T1CTL){
-    fprintf(stderr, "%s:%d CC2530 radio %s: read of T1CTL\n", __FILE__, __LINE__, __FUNCTION__);}
+  /*  else if (cell == cell_T1CTL){
+      fprintf(stderr, "%s:%d CC2530 radio %s: read of T1CTL\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_T1CCTL0){
     fprintf(stderr, "%s:%d  CC2530 radio %s: read of T1CCTL0\n", __FILE__, __LINE__, __FUNCTION__);}
-  else if (cell == cell_T1CCTL1){
-    fprintf(stderr, "%s:%d CC2530 radio %s: read of T1CCTL1\n", __FILE__, __LINE__, __FUNCTION__);}
+    else if (cell == cell_T1CCTL1){
+      fprintf(stderr, "%s:%d CC2530 radio %s: read of T1CCTL1\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_T1CCTL2){
-    fprintf(stderr, "%s:%d CC2530 radio %s: read of T1CCTL2\n", __FILE__, __LINE__, __FUNCTION__);}
+  fprintf(stderr, "%s:%d CC2530 radio %s: read of T1CCTL2\n", __FILE__, __LINE__, __FUNCTION__);}*/
   else if (cell == cell_IRCON2){
     fprintf(stderr, "%s:%d  CC2530 radio %s: read of IRCON2\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_RFIRQF0){

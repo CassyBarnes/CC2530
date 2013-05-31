@@ -1,25 +1,48 @@
-#include "uc51cl.h"
+#ifndef CC2530timer1cl
+#define CC2530timer1cl
+
+#include "memcl.h"
+#include "uccl.h"
+
+struct channel {
+  bool IOPin;
+  bool ExIOPin;
+  int captureRisingEdge;
+  int captureFallEdge;
+  t_addr RegCMPL;
+  t_addr RegCMPH;
+  t_addr RegCTL;
+};
 
 
 class cl_CC2530_timer1: public cl_hw
 {
 protected:
   class cl_memory_cell *cell_t1stat, *cell_t1ctl, *cell_clkconcmd, *cell_tl, *cell_th;
-  t_mem mask_M0, mask_M1, mask_TF;
+  t_mem mask_M0, mask_M1, mask_TF, captureMode;
   t_addr addr_tl, addr_th;
-  int mode, TR, tickspd, prescale, IOPinChn, IOPinCh0, IOPinCh1, IOPinCh2, IOPinCh3, IOPinCh4, captureRisingEdgen, captureRisingEdge0, captureRisingEdge1, captureRisingEdge2, captureRisingEdge3, captureRisingEdge4, captureFallEdgen, captureFallEdge0, captureFallEdge1, captureFallEdge2, captureFallEdge3, captureFallEdge4;
+  bool up_down, cc, risingEdge;
+  int mode;
+  int  TR;
+  bool capt;
+  int ctrl;
+  int tickcount;
+  int  tickspd;
+  int  prescale;
   double ticks, freq;
   double CC2530xtal;
+  struct channel tabCh[5];
+  class cl_address_space *sfr, *xram;
+
 public:
 
   cl_CC2530_timer1(class cl_uc *auc, int aid, char *aid_string);
   virtual int init(void);
 
   virtual void added_to_uc(void);
-  virtual void tickspeed(void);
-  virtual void prescaler(void);
-  virtual void Capture(int i);
-  virtual void Compare(int i);
+  virtual void CaptureCompare(void);
+  virtual bool Capture(bool& IOPin, bool& ExIOPin, int captureMode);
+  virtual int Compare(int IOPinChn, t_addr ctrlReg, t_addr T1CCnH, t_addr T1CCnL);
   virtual void reset(void);
   virtual double get_rtime(void);
   virtual void write(class cl_memory_cell *cell, t_mem *val);
@@ -33,7 +56,10 @@ public:
   virtual void happen(class cl_hw *where, enum hw_event he, void *params);
 
   virtual void print_info(class cl_console *con);
+  virtual void print_info();
 };
 
 
 /* End of s51.src/CC2530timer1cl.h */
+
+#endif // CC2530timer1cl

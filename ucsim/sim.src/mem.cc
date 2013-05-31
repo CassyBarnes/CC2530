@@ -236,7 +236,6 @@ cl_memory::dump(class cl_console *con)
   return(dump(dump_finished, dump_finished+10*8-1, 8, con));
 }
 
-
 bool
 cl_memory::search_next(bool case_sensitive,
 		       t_mem *array, int len, t_addr *addr)
@@ -705,7 +704,7 @@ cl_dummy_cell::set(t_mem val)
 
 
 /*
- *                              Address space
+ *                                                                Address space
  */
 
 cl_address_space::cl_address_space(char *id, t_addr astart, t_addr asize, 
@@ -742,24 +741,6 @@ cl_address_space::cl_address_space(char *id, t_addr astart, t_addr asize,
   dummy= new cl_dummy_cell();
 }
 
-/*sub_address_space Added by Calypso for CC2530 memory map specifications*/
-/*
-cl_sub_address_space::cl_sub_address_space(char *id,
-				t_addr astart, t_addr asize, int awidth, char *asid):
-  cl_memory(id, asize, awidth)
-{
-  start_address= astart;
-  class cl_address_space *mem= uc->address_space(asid);
-  //cells= (class cl_memory_cell **)malloc(size * sizeof(class cl_memory_cell*));
-  int i;
-  for (i= start_address; i < start_address+size; i++)
-    {
-      cells[i]= mem->cells[i];
-     }
-  fprintf(stderr,"SubMemory ID: %s, part of Memory %s\n", this->name, asid);
-  dummy= new cl_dummy_cell();
-  }*/
-
 cl_address_space::~cl_address_space(void)
 {
   delete decoders;
@@ -770,13 +751,7 @@ cl_address_space::~cl_address_space(void)
   delete dummy;
 }
 
-/*Added by Calypso*/
-/*cl_sub_address_space::~cl_sub_address_space(void)
-{
-  delete dummy;
-  }*/
-
- //Modified by Calypso for rom read redirect to correct flashbank  
+  
 t_mem
 cl_address_space::read(t_addr addr)
 {
@@ -793,32 +768,39 @@ cl_address_space::read(t_addr addr)
   class cl_memory *flashbank3 = uc->memory("flashbank3");
   char *asname = get_name();
  
- if (asname == rom->get_name()){
+  if (asname == rom->get_name()){
+
     if (idx < 0x8000)
-      return(flashbank0->read(idx));
-    else {
-      int fmap = sfr->read(FMAP) & 0x07;
+      return flashbank0->read(idx);
+    
+    {
       int execFromSram = sfr->read(MCON) & 0x08;
-      idx %= 0x8000;
+      idx &= 0x7FFF;
+
       if ((execFromSram != 0) && (idx < 0x2000))
-	      return(sram->read(idx));
-      else
-	{
-	  switch (fmap)
-	    {
-	    case 0:
-	      return(flashbank0->read(idx));
-	    case 1:
-	      return(flashbank1->read(idx));
-	    case 2:
-	      return(flashbank2->read(idx));
-	    case 3:
-	      return(flashbank3->read(idx));
-	    default:
-	      fprintf(stderr, "Invalid fmap value.\n");
-	      return(cells[idx]->read());
-	    }
-	}	  
+	return(sram->read(idx));
+
+      {
+	int fmap = sfr->read(FMAP) & 0x07;
+	switch (fmap)
+	  {
+	  case 0:
+	    return(flashbank0->read(idx));
+	    break;
+	  case 1:
+	    return(flashbank1->read(idx));
+	    break;
+	  case 2:
+	    return (flashbank2->read(idx));
+	    break;
+	  case 3:
+	    return(flashbank3->read(idx));
+	    break;
+	  default:
+	    assert(!"Invalid fmap value.");
+	    break; // return(cells[idx]->read());
+	  }
+      }	  
     }
   }
   else if (asname == xram->get_name())

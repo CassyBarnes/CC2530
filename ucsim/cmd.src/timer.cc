@@ -119,12 +119,12 @@ COMMAND_DO_WORK_UC(cl_timer_add_cmd)
 
   if (!as_nr)
     {
-      ticker= new cl_ticker(dir, in_isr, id_str);
+      ticker= new cl_ticker(uc, dir, in_isr, id_str);
       uc->add_counter(ticker, id_str);
     }
   else
     {
-      ticker= new cl_ticker(dir, in_isr, 0);
+      ticker= new cl_ticker(uc, dir, in_isr, 0);
       uc->add_counter(ticker, id_nr);
     }
 
@@ -179,8 +179,8 @@ COMMAND_DO_WORK_UC(cl_timer_get_cmd)
   else
     {
       uc->ticks->dump(0, uc->xtal, con);
-      uc->isr_ticks->dump(0, uc->xtal, con);
-      uc->idle_ticks->dump(0, uc->xtal, con);
+      //     uc->isr_ticks->dump(0, uc->xtal, con);
+      //    uc->idle_ticks->dump(0, uc->xtal, con);
       for (id_nr= 0; id_nr < uc->counters->count; id_nr++)
 	{
 	  ticker= uc->get_counter(id_nr);
