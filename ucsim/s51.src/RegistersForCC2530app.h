@@ -18,7 +18,7 @@
 #define P2IFG	0X8B
 #define PICTL	0X8C
 #define P1IEN	0X8D
-#define AUXR	0X8E
+#define ZERO	0X8E
 #define P0INP	0X8F
 #define P1	0X90
 #define RFIRQF1	0X91

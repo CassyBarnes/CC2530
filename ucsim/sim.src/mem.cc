@@ -49,6 +49,13 @@
 
 #include "../s51.src/regs51.h"
 
+#define DEBUG
+#ifdef DEBUG
+#define TRACE() \
+fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
+#else
+#define TRACE()
+#endif
 /*
  *                                                3rd version of memory system
  */
@@ -755,7 +762,7 @@ cl_address_space::~cl_address_space(void)
 t_mem
 cl_address_space::read(t_addr addr)
 {
-  t_addr idx= addr-start_address;
+
 
   class cl_memory *sfr = uc->memory("sfr");
   class cl_memory *rom = uc->memory("rom");
@@ -768,6 +775,8 @@ cl_address_space::read(t_addr addr)
   class cl_memory *flashbank3 = uc->memory("flashbank3");
   char *asname = get_name();
  
+  t_addr idx= addr-start_address;
+
   if (asname == rom->get_name()){
 
     if (idx < 0x8000)
@@ -837,9 +846,12 @@ cl_address_space::read(t_addr addr)
       else
 	return(cells[idx]->read());
     }
+
   else if (idx >= size ||
 	   addr < start_address)
     {
+      fprintf(stderr, "idx: 0x%02x\n", idx);
+      TRACE();
       err_inv_addr(addr);
       return(dummy->read());
     }
@@ -851,9 +863,13 @@ t_mem
 cl_address_space::read(t_addr addr, enum hw_cath skip)
 {
   t_addr idx= addr-start_address;
+      fprintf(stderr, "idx: 0x%02x\n", idx);
+      TRACE();
   if (idx >= size ||
       addr < start_address)
     {
+      fprintf(stderr, "idx: 0x%02x\n", idx);
+      TRACE();
       err_inv_addr(addr);
       return(dummy->read());
     }
@@ -864,11 +880,11 @@ t_mem
 cl_address_space::get(t_addr addr)
 {
   char *asname = get_name();
+  class cl_memory *sfr = uc->memory("sfr");
   class cl_memory *flashbank0 = uc->memory("flashbank0");
   class cl_memory *flashbank1 = uc->memory("flashbank1");
   class cl_memory *flashbank2 = uc->memory("flashbank2");
   class cl_memory *flashbank3 = uc->memory("flashbank3");
-  class cl_memory *sfr = uc->memory("sfr");
   class cl_memory *rom = uc->memory("rom");
   class cl_memory *xram = uc->memory("xram");
   class cl_memory *sram = uc->memory("sram");
@@ -966,6 +982,8 @@ cl_address_space::write(t_addr addr, t_mem val)
   if (idx >= size ||
       addr < start_address)
     {
+      fprintf(stderr, "idx: 0x%02x\n", idx);
+      TRACE();
       err_inv_addr(addr);
       return(dummy->write(val));
     }
@@ -1023,6 +1041,8 @@ cl_address_space::set(t_addr addr, t_mem val)
   if (idx >= size ||
       addr < start_address)
     {
+      fprintf(stderr, "idx: 0x%02x\n", idx);
+      TRACE();
       err_inv_addr(addr);
       dummy->set(val);
       return;
@@ -1072,6 +1092,8 @@ cl_address_space::wadd(t_addr addr, long what)
   if (idx >= size ||
       addr < start_address)
     {
+      fprintf(stderr, "addr: 0x%02x\n", addr);
+      TRACE();
       err_inv_addr(addr);
     }
   return(cells[idx]->wadd(what));
@@ -1106,9 +1128,13 @@ class cl_memory_cell *
 cl_address_space::get_cell(t_addr addr)
 {
   t_addr idx= addr-start_address;
+
   if (idx >= size ||
       addr < start_address)
     {
+      fprintf(stderr, "addr: 0x%02x\n", addr);
+      TRACE();
+
       err_inv_addr(addr);
       return(dummy);
     }

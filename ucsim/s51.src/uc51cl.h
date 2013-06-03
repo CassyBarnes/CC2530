@@ -41,8 +41,10 @@
 #include "itsrccl.h"
 #include "brkcl.h"
 #include "stypes.h"
-#include "CC2530timer1cl.h" 
 
+#include "CC2530timercl.h" 
+#include "CC2530timer1cl.h" 
+#include "CC2530timer3cl.h" 
 #include "interruptcl.h"
 
 #define DEBUG
@@ -85,6 +87,7 @@ public:
   class cl_address_space *sram;//Modif by Calypso for CC2530
   class cl_memory_cell *acc, *psw;
   cl_CC2530_timer1  *CC2530timer1;
+  cl_CC2530_timer3  *CC2530timer3;
 
 public:
   // Help to detect external it requests (falling edge)

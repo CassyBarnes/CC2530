@@ -876,14 +876,14 @@ cl_radio::read(class cl_memory_cell *cell)
     fprintf(stderr, "%s:%d CC2530 radio %s: read of T3CNT\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_T3CTL){
     fprintf(stderr, "%s:%d  CC2530 radio %s: read of T3CTL\n", __FILE__, __LINE__, __FUNCTION__);}
-  else if (cell == cell_T3CCTL0){
+  /*  else if (cell == cell_T3CCTL0){
     fprintf(stderr, "%s:%d CC2530 radio %s: read of T3CCTL0\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_T3CC0){
     fprintf(stderr, "%s:%d CC2530 radio %s: read of T3CC0\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_T3CCTL1){
     fprintf(stderr, "%s:%d  CC2530 radio %s: read of T3CCTL1\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_T3CC1){
-    fprintf(stderr, "%s:%d CC2530 radio %s: read of T3CC1\n", __FILE__, __LINE__, __FUNCTION__);}
+  fprintf(stderr, "%s:%d CC2530 radio %s: read of T3CC1\n", __FILE__, __LINE__, __FUNCTION__);}*/
   else if (cell == cell_DMAIRQ){
     fprintf(stderr, "%s:%d CC2530 radio %s: read of DMAIRQ\n", __FILE__, __LINE__, __FUNCTION__);}
   else if (cell == cell_DMA1CFGL){
