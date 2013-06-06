@@ -12,11 +12,11 @@ fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
 #define TRACE()
 #endif
 
-cl_CC2530_timer::cl_CC2530_timer(class cl_uc *auc, int aid, char *aid_string):
+template<class T>
+cl_CC2530_timer<T>::cl_CC2530_timer(class cl_uc *auc, int aid, char *aid_string):
   cl_hw(auc, HW_TIMER, aid, aid_string)
 {
   volatile int callnbr = 0;
-  TRACE();
 #ifdef DEBUG
   callnbr++;
   fprintf(stderr, "Called %d times\n\n", callnbr);
@@ -32,13 +32,73 @@ cl_CC2530_timer::cl_CC2530_timer(class cl_uc *auc, int aid, char *aid_string):
 }
 
 
+template<class T>
+int
+cl_CC2530_timer<T>::init(void)
+{
+  TRACE();
+  class cl_address_space *sfr= uc->address_space(MEM_SFR_ID);
+  CC2530xtal=32000000;
+  fprintf(stderr, "CC2530xtal init at %g Hz\n", CC2530xtal);
+  register_cell(sfr, CLKCONCMD, &cell_clkconcmd, wtd_restore_write);
+  return(0);
+}
+
+template<class T>
+int
+cl_CC2530_timer<T>::tick(int cycles)
+{
+  TRACE();
+  fprintf(stderr, "%s\n", id_string);
+  fprintf(stderr, "tick! %g ticks... %d cycles. Time elapsed: %g s\n", systemTicks, cycles, get_rtime());
+  fprintf(stderr, "Mode: %d\n", mode);
+}
+
+template<class T>
+double
+cl_CC2530_timer<T>::get_rtime(void)
+{
+  return(MemElapsedTime + systemTicks/freq);
+}
+
+template<class T>
 void
-cl_CC2530_timer::CaptureCompare(void)
+cl_CC2530_timer<T>::reset(void)
+{
+  cell_tl->write(0);
+  if (cell_th != NULL)
+    cell_th->write(0);
+  ticks=0;
+}
+
+template<class T>
+void
+cl_CC2530_timer<T>::added_to_uc(void)
+{
+  //overflow interrupt
+  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmOVFIF, 0x001b, true,
+				    "timer #1 overflow", 4));
+  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmCH0IF, 0x001b, true,
+				    "timer #1 Channel 0 interrupt", 4));
+  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmCH1IF, 0x001b, true,
+				    "timer #1 Channel 1 interrupt", 4));
+  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmCH2IF, 0x001b, true,
+				    "timer #1 Channel 2 interrupt", 4));
+  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmCH3IF, 0x001b, true,
+				    "timer #1 Channel 3 interrupt", 4));
+  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmCH4IF, 0x001b, true,
+				    "timer #1 Channel 4 interrupt", 4));
+}
+
+template<class T>
+void
+cl_CC2530_timer<T>::CaptureCompare(void)
 {
   cc=0;
   TRACE();
   if (ChMax>3)
     {
+      TRACE();
       for (int i=0; i<3; i++)
 	{
 	  //Possible capture/compare cases
@@ -48,25 +108,30 @@ cl_CC2530_timer::CaptureCompare(void)
 	      capt=Capture(tabCh[i].IOPin, tabCh[i].ExIOPin, captureMode);
 	      if (capt == true)
 		{
-		  sfr->write(tabCh[i].RegCMPH, sfr->read(T1CNTH));
-		  sfr->write(tabCh[i].RegCMPL, sfr->read(T1CNTL));
-		  fprintf(stderr,"\nCount: 0x%04x\n",256*cell_th->get()+cell_tl->get());
-		  fprintf(stderr,"\nCapture: in %s of value: 0x%04x\n\n", id_string, 
-			  256*sfr->read(tabCh[i].RegCMPH)+sfr->read(tabCh[i].RegCMPL));
+		  if (cell_th != NULL)
+		    sfr->write(tabCh[i].RegCMPH, count>>8);
+		  sfr->write(tabCh[i].RegCMPL, count & 0xFF);
+
+		  fprintf(stderr,"\nCount: 0x%04x\n",count);
+		  fprintf(stderr,"\nCapture: in %s of value: 0x%04x\n\n", 
+			  id_string, tabCh[i].ValRegCMP);
+
 		  int flag=1<<i;
 		  sfr->write(T1STAT, flag);
 		}
 	    }
 	  else//compare mode
 	    {
-	      if (((cell_tl->get() == sfr->read(T1CC0L)) 
-		   && (cell_th->get() == sfr->read(T1CC0H)))
-		  ||((cell_tl->get() == sfr->read(tabCh[i].RegCMPL)) 
-		     && (cell_th->get() == sfr->read(tabCh[i].RegCMPH)))
-		  ||((cell_tl->get() == 0) && (cell_th->get() == 0)))
+	      fprintf(stderr, "Channel %d in compare mode...\n", i);
+	      fprintf(stderr, "Count: 0x%04x\n", count);
+	      fprintf(stderr, "Compare reg val: 0x%04x\n", tabCh[i].ValRegCMP);
+	      fprintf(stderr, "Channel 0 Compare reg val: 0x%04x\n", tabCh[0].ValRegCMP);
+	      if ((count == tabCh[0].ValRegCMP)
+		  ||(count == tabCh[i].ValRegCMP)
+		  ||(count == 0))
 		{
 		  TRACE();
-		  tabCh[i].IOPin=Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].RegCMPH, tabCh[i].RegCMPL);
+		  tabCh[i].IOPin=Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].ValRegCMP);
 		  cc=1;
 		}
 	    }
@@ -80,22 +145,20 @@ cl_CC2530_timer::CaptureCompare(void)
 	      capt=Capture(tabCh[i].IOPin, tabCh[i].ExIOPin, captureMode);
 	      if (capt == true)
 		{
-		  xram->write(tabCh[i].RegCMPH, sfr->read(T1CNTH));
-		  xram->write(tabCh[i].RegCMPL, sfr->read(T1CNTL));
+		  xram->write(tabCh[i].RegCMPH, count>>8);
+		  xram->write(tabCh[i].RegCMPL, count & 0xFF);
 		  int flag=1<<i;
 		  sfr->write(T1STAT, flag);
 		}
 	    }
 	  else
 	    {
-	      if (((cell_tl->get() == sfr->read(T1CC0L)) 
-		   && (cell_th->get() == sfr->read(T1CC0H)))
-		  ||((cell_tl->get() == xram->read(tabCh[i].RegCMPL)) 
-		     && (cell_th->get() == xram->read(tabCh[i].RegCMPH)))
-		  ||((cell_tl->get() == 0) && (cell_th->get() == 0)))
+	      if ((count == tabCh[0].ValRegCMP)
+		  ||(count == tabCh[i].ValRegCMP)
+		  ||(count == 0))
 		{
 		  TRACE();
-		  tabCh[i].IOPin=Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].RegCMPH, tabCh[i].RegCMPL);
+		  tabCh[i].IOPin=Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].ValRegCMP);
 		  cc=1;
 		}
 	    }
@@ -113,23 +176,21 @@ cl_CC2530_timer::CaptureCompare(void)
 		{
 		  sfr->write(tabCh[i].RegCMPH, sfr->read(T1CNTH));
 		  sfr->write(tabCh[i].RegCMPL, sfr->read(T1CNTL));
-		  fprintf(stderr,"\nCount: 0x%04x\n",256*cell_th->get()+cell_tl->get());
+		  fprintf(stderr,"\nCount: 0x%04x\n", count);
 		  fprintf(stderr,"\nCapture: in %s of value: 0x%04x\n\n", id_string, 
-			  256*sfr->read(tabCh[i].RegCMPH)+sfr->read(tabCh[i].RegCMPL));
+			  tabCh[i].ValRegCMP);
 		  int flag=1<<i;
 		  sfr->write(T1STAT, flag);
 		}
 	    }
 	  else//compare mode
 	    {
-	      if (((cell_tl->get() == sfr->read(T1CC0L)) 
-		   && (cell_th->get() == sfr->read(T1CC0H)))
-		  ||((cell_tl->get() == sfr->read(tabCh[i].RegCMPL)) 
-		     && (cell_th->get() == sfr->read(tabCh[i].RegCMPH)))
-		  ||((cell_tl->get() == 0) && (cell_th->get() == 0)))
+	      if ((count == tabCh[0].ValRegCMP)
+		  ||(count == tabCh[i].ValRegCMP)
+		  ||(count == 0))
 		{
 		  TRACE();
-		  tabCh[i].IOPin=Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].RegCMPH, tabCh[i].RegCMPL);
+		  tabCh[i].IOPin=Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].ValRegCMP);
 		  cc=1;
 		}
 	    }
@@ -141,8 +202,9 @@ cl_CC2530_timer::CaptureCompare(void)
     }
 }
 
+template<class T>
 bool
-cl_CC2530_timer::Capture(bool& IOPin, bool& ExIOPin, int captureMode)
+cl_CC2530_timer<T>::Capture(bool& IOPin, bool& ExIOPin, int captureMode)
 {
   bool capture =false;
   if (IOPin != ExIOPin)//transition
@@ -168,8 +230,9 @@ cl_CC2530_timer::Capture(bool& IOPin, bool& ExIOPin, int captureMode)
   return (capture);
 }
 
-int
-cl_CC2530_timer::Compare(int IOPinChn, t_addr ctrlReg, t_addr TxCCnH, t_addr TxCCnL)
+template<class T>
+bool
+cl_CC2530_timer<T>::Compare(bool IOPinChn, t_addr ctrlReg, T TxCCn)
 {
   TRACE();
   if (ctrlReg == T1CCTL3 || ctrlReg == T1CCTL4)
@@ -183,18 +246,15 @@ cl_CC2530_timer::Compare(int IOPinChn, t_addr ctrlReg, t_addr TxCCnH, t_addr TxC
       switch((ctrl & 0x38)>>3)
 	{ 
 	case 0:	//set output on compare
-	  if ((sfr->read(TxCC0L)== cell_tl->get())
-	       &&(sfr->read(TxCC0H) == cell_th->get())) 
+	  if (count == tabCh[0].ValRegCMP) 
 	    IOPinChn = 1; 
 	  break;
 	case 1: //Clear output on compare	  
-	  if ((sfr->read(TxCC0L)== cell_tl->get())
-	      &&(sfr->read(TxCC0H) == cell_th->get()))
+	  if (count == tabCh[0].ValRegCMP) 
 	    IOPinChn = 0; 
 	  break;
 	case 2: //Toggle output on compare
-	  if ((sfr->read(TxCC0L)== cell_tl->get())
-	      &&(sfr->read(TxCC0H) == cell_th->get()))
+	  if (count == tabCh[0].ValRegCMP) 
 	    {
 	      if (IOPinChn == 0)
 		IOPinChn = 1;
@@ -206,8 +266,7 @@ cl_CC2530_timer::Compare(int IOPinChn, t_addr ctrlReg, t_addr TxCCnH, t_addr TxC
 	case 3:
 	  if (mode == 3)//up/down
 	    {
-	      if ((sfr->read(TxCCnL) == cell_tl->get()) 
-		   && (sfr->read(TxCCnH) == cell_th->get())) 
+	      if (count == TxCCn) 
 		{
 		  //Count at threshold (toggle output)
 		  if (up_down == 0)//Counting up
@@ -215,12 +274,10 @@ cl_CC2530_timer::Compare(int IOPinChn, t_addr ctrlReg, t_addr TxCCnH, t_addr TxC
 		  else
 		    IOPinChn = 0;
 		}
-	      else if (((sfr->read(TxCCnL) < cell_tl->get()) 
-			&& (sfr->read(TxCCnH) == cell_th->get()))
-		       ||(sfr->read(TxCCnH) < cell_th->get()))
+	      else if (count > TxCCn)
 		{
 		  //count above threshold
-		    IOPinChn = 1;
+		  IOPinChn = 1;
 		}
 	      else
 		{
@@ -229,18 +286,16 @@ cl_CC2530_timer::Compare(int IOPinChn, t_addr ctrlReg, t_addr TxCCnH, t_addr TxC
 	    }
 	  else
 	    {
-	      if ((sfr->read(TxCCnL)== cell_tl->get()) 
-		  && (sfr->read(TxCCnH) == cell_th->get()))
+	      if (count == TxCCn)
 		IOPinChn = 1;
-	      if ((cell_tl->get() == 0) && (cell_th->get() == 0))
+	      if (count == 0)
 		IOPinChn = 0;
 	    }
 	  break;
 	case 4://Clear output on compare-up, set on 0
 	  if (mode == 3)//up/down
 	    {
-	      if ((sfr->read(TxCCnL) == cell_tl->get()) 
-		   && (sfr->read(TxCCnH) == cell_th->get())) 
+	      if (count == TxCCn) 
 		{
 		  //Count at threshold (toggle output)
 		  if (up_down == 0)//counting up
@@ -248,9 +303,7 @@ cl_CC2530_timer::Compare(int IOPinChn, t_addr ctrlReg, t_addr TxCCnH, t_addr TxC
 		  else
 		    IOPinChn = 1;
 		}
-	      else if (((sfr->read(TxCCnL) < cell_tl->get()) 
-			&& (sfr->read(TxCCnH) == cell_th->get()))
-		       ||(sfr->read(TxCCnH) < cell_th->get()))
+	      else if (count > TxCCn)
 		{
 		  //count above threshold
 		    IOPinChn = 0;
@@ -263,56 +316,49 @@ cl_CC2530_timer::Compare(int IOPinChn, t_addr ctrlReg, t_addr TxCCnH, t_addr TxC
 	    }
 	  else
 	    {
-	      if ((sfr->read(TxCCnL)== cell_tl->get())
-		  &&(sfr->read(TxCCnH) == cell_th->get()))
+	      if (count == TxCCn)
 		IOPinChn = 0;
-	      if ((cell_tl->get() == 0) && (cell_th->get() == 0))
+	      if (count == 0)
 		IOPinChn = 1;
 	    }
 	  break;
 	case 5: //Clear when equal TxCC0, set when equal TxCCn
-	  if (TxCC0L == TxCCnL)
+	  if (ctrlReg == T1CCTL0)
 	    {
 	      break;
 	    }
 	  else if (mode == 2)//Modulo mode -> case 5 <=> case 3
 	    {
-	      if ((sfr->read(TxCCnL) == cell_tl->get()) 
-		  && (sfr->read(TxCCnH) == cell_th->get()))
+	      if (count == TxCCn)
 		IOPinChn = 1;
-	      if ((cell_tl->get() == 0) && (cell_th->get() == 0))
+	      if (count == 0)
 		IOPinChn = 0;
 	    }
 	  else
 	    {
-	      if ((sfr->read(TxCC0L)== cell_tl->get())
-		  &&(sfr->read(TxCC0H) == cell_th->get()))
+	      if (count == tabCh[0].ValRegCMP)
 		IOPinChn = 0;
-	      if ((sfr->read(TxCCnL)== cell_tl->get())
-		  &&(sfr->read(TxCCnH) == cell_th->get()))
+	      if (count == TxCCn)
 		IOPinChn = 1;
 	    }
 	  break;
 	case 6: //Set when equal TxCC0, clear when equal TxCCn
-	  if (TxCC0L == TxCCnL)
+	  if (ctrlReg == T1CCTL0)
 	    {
 	      break;
 	    }
 	  else if (mode == 2)//Modulo mode-> case 6 <=> case 4
 	    {
-	      if ((sfr->read(TxCCnL)== cell_tl->get()) 
-		  && (sfr->read(TxCCnH) == cell_th->get()))
+	      if (count == TxCCn)
 		IOPinChn = 0;
-	      if ((cell_tl->get() == 0) && (cell_th->get() == 0))
+	      if (count == 0)
 		IOPinChn = 1;
 	    }
 	  else
 	    {
-	      if ((sfr->read(TxCC0L) == cell_tl->get())
-		  &&(sfr->read(TxCC0H) == cell_th->get()))
+	      if (count == tabCh[0].ValRegCMP)
 		IOPinChn = 1;
-	      if ((sfr->read(TxCCnL) == cell_tl->get())
-		  &&(sfr->read(TxCCnH) == cell_th->get()))
+	      if (count == TxCCn)
 		IOPinChn = 0;
 	    }
 	  break;
@@ -323,59 +369,10 @@ cl_CC2530_timer::Compare(int IOPinChn, t_addr ctrlReg, t_addr TxCCnH, t_addr TxC
       return(IOPinChn);
 }
 
-int
-cl_CC2530_timer::init(void)
-{
-  TRACE();
-  class cl_address_space *sfr= uc->address_space(MEM_SFR_ID);
-  CC2530xtal=32000000;
-  fprintf(stderr, "CC2530xtal init at %g Hz\n", CC2530xtal);
-  register_cell(sfr, CLKCONCMD, &cell_clkconcmd, wtd_restore_write);
 
-  
-  return(0);
-}
-
-int
-cl_CC2530_timer::tick(int cycles)
-{
-
-  TRACE();
-  fprintf(stderr, "Old ticks...  %g\n", ticks);
-
-  ticks+=(double)cycles;
-
-  fprintf(stderr, "tick! %g ticks... %d cycles. Time elapsed: %g s\n", ticks, cycles, get_rtime());
-
-  fprintf(stderr, "Mode: %d\n", mode);
-}
-
-double
-cl_CC2530_timer::get_rtime(void)
-{
-  return(ticks/freq);
-}
-
+template<class T>
 void
-cl_CC2530_timer::added_to_uc(void)
-{
-  //overflow interrupt
-  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmOVFIF, 0x001b, true,
-				    "timer #1 overflow", 4));
-  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmCH0IF, 0x001b, true,
-				    "timer #1 Channel 0 interrupt", 4));
-  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmCH1IF, 0x001b, true,
-				    "timer #1 Channel 1 interrupt", 4));
-  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmCH2IF, 0x001b, true,
-				    "timer #1 Channel 2 interrupt", 4));
-  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmCH3IF, 0x001b, true,
-				    "timer #1 Channel 3 interrupt", 4));
-  uc->it_sources->add(new cl_it_src(bmT1IE, T1STAT, bmCH4IF, 0x001b, true,
-				    "timer #1 Channel 4 interrupt", 4));
-}
-
-void
-cl_CC2530_timer::write(class cl_memory_cell *cell, t_mem *val)
+cl_CC2530_timer<T>::write(class cl_memory_cell *cell, t_mem *val)
 {
   if (cell == cell_txctl) // correspond to TxCTL register (sfr->read(T1CTL))
     {
@@ -389,21 +386,6 @@ cl_CC2530_timer::write(class cl_memory_cell *cell, t_mem *val)
 	mode= 3;
       else
 	mode= 0;
-      //tickspeed();
-      //prescaler();  // sfr->read(T1CTL)
-      switch((*val & bmDIV)>>2)
-	{ 
-	case 0: prescale= 1; break;
-	case 1: prescale= 8; break;
-	case 2: prescale= 32; break;
-	case 3: prescale= 128; break;
-	default: prescale=1; break;
-	}
-      freq= CC2530xtal/(prescale*tickspd);
-      fprintf(stderr,"Modification of T1CTL.\n");
-      fprintf(stderr,
-      "Prescale value: %d System clk division: %d Frequency: %g Hz Crystal: %g Hz\n",
-	      prescale, tickspd, freq, CC2530xtal);
     }
   else if (cell == cell_clkconcmd)
     {
@@ -420,28 +402,32 @@ cl_CC2530_timer::write(class cl_memory_cell *cell, t_mem *val)
 	case 7: tickspd= 128; break;
 	default: tickspd=1; break;
 	}
-
-      freq= CC2530xtal/(prescale*tickspd);
+      MemElapsedTime = get_rtime();
+      MemSystemTicks = systemTicks;
+      systemTicks=0;
+      freq= CC2530xtal/(tickspd);
       fprintf(stderr,"switch value: %d in %s: tickspeed x %d\n",
 	      *val & 0x07,
 	      __FUNCTION__,
 	      tickspd);
       fprintf(stderr,"Modification of CLKCONCMD.\n");
       fprintf(stderr,
-      "Prescale value: %d System clk division: %d Frequency: %g Hz Crystal:%g Hz\n"
+	      "Prescale value: %d System clk division: %d Frequency: %g Hz Crystal:%g Hz\n"
 	      ,prescale, tickspd, freq, CC2530xtal);
     }
 }
 
+template<class T>
 int
-cl_CC2530_timer::do_Stop(int cycles)
+cl_CC2530_timer<T>::do_Stop(int cycles)
 {
   TRACE();
   return(0);//timer stopped
 }
 
+template<class T>
 int
-cl_CC2530_timer::do_FreeRunningMode(int cycles)//Mode 1: free-running from 0 to FFFF
+cl_CC2530_timer<T>::do_FreeRunningMode(int cycles)//Mode 1: free-running from 0 to FFFF
 {
   TRACE();
 
@@ -449,50 +435,51 @@ cl_CC2530_timer::do_FreeRunningMode(int cycles)//Mode 1: free-running from 0 to 
   while (cycles--)
     {
       TRACE();
-      //Do add(1) to low cell, if 0 do add(1) to high cell, if 0 overflow 
-      if (!cell_tl->add(1))//if tl==0 => overflow tl
+      count++;
+      if (count==0)
 	{
-	  if (!cell_th->add(1))
-	    {
-	      cell_txstat->set_bit1(mask_TF);//TF is timer overflow flag
-	      overflow();
-	    }
+	  cell_txstat->set_bit1(mask_TF);//TF is timer overflow flag
+	  overflow();
 	}
+      refresh_sfr(count);
       CaptureCompare();
     }
   return(0);
 }
 
+template<class T>
 int
-cl_CC2530_timer::do_ModuloMode(int cycles)//Mode 2: Modulo count from 0 to TxCC0 value
+cl_CC2530_timer<T>::do_ModuloMode(int cycles)//Mode 2: Modulo count from 0 to TxCC0 value
 {
   TRACE();
-  if (!TR)
-    return(0);
 
   while (cycles--)
     {
-      if (!cell_tl->add(1))//if tl==0 after add 1 => overflow tl
+      if (count == tabCh[0].ValRegCMP)
 	{
-	  if (!cell_th->add(1))
+	  count=0;
+	  cell_txstat->set_bit1(mask_TF);//TF is timer overflow flag
+	  overflow();
+	} 
+      else
+	{
+	  count++;
+	  if (count == 0)//Case where TxCC0 > Maximum value of timer
 	    {
 	      cell_txstat->set_bit1(mask_TF);//TF is timer overflow flag
 	      overflow();
-	    }
+	    } 
 	}
-      if ((cell_tl->get() == sfr->read(TxCC0L)) 
-	  && (cell_th->get() == sfr->read(TxCC0H)))
-	{
-	  cell_tl->set(0);
-	  cell_th->set(0);
-	}
+
+      refresh_sfr(count);
       CaptureCompare();
     }
   return(0);
 }
 
+template<class T>
 int
-cl_CC2530_timer::do_UpDownMode(int cycles)//mode 3: up/down to TxCC0
+cl_CC2530_timer<T>::do_UpDownMode(int cycles)//mode 3: up/down to TxCC0
 {
 
   while (cycles--)
@@ -501,85 +488,98 @@ cl_CC2530_timer::do_UpDownMode(int cycles)//mode 3: up/down to TxCC0
       //Count up 
       if (!up_down)
 	{
-	  if (!cell_tl->add(1))
+	  count++;
+	  if (count==0)
 	    {
-	      if (!cell_th->add(1))
-		{
-		  cell_txstat->set_bit1(mask_TF);
-		  overflow();
-		}
+	      cell_txstat->set_bit1(mask_TF);//TF is timer overflow flag
+	      overflow();
 	    }
-	  if ((cell_tl->get() == sfr->read(TxCC0L)) 
-	      && (cell_th->get() == sfr->read(TxCC0H)))
+	  if (count == tabCh[0].ValRegCMP)
 	    up_down=1;
 	}
       //Count down
       else
-	{	
-	  if (cell_tl->add(-1) == 0xFF)
-	    {
-	      cell_th->add(-1);
-	    }
-	  if ((cell_tl->get() == 0) && (cell_th->get() == 0))
+	{	 
+	  count--;
+	  if (count == 0)
 	    {
 	      cell_txstat->set_bit1(mask_TF);
 	      overflow();
 	      up_down=0;
 	    }
 	}
+      refresh_sfr(count);
       CaptureCompare();
     }
   return(0);
 }
 
-void
-cl_CC2530_timer::reset(void)
-{
-  cell_tl->write(0);
-  cell_th->write(0);
-  ticks=0;
-}
 
+
+template<class T>
 int
-cl_CC2530_timer::do_DownMode(int cycles)//mode 4: down from TxCC0
+cl_CC2530_timer<T>::do_DownMode(int cycles)//mode 4: down from TxCC0
 {
   while (cycles--)
     {
-      if (cell_tl->add(-1) == 0xFF)
+      if (count == 0)
 	{
-	  cell_th->add(-1);
+	  count=tabCh[0].ValRegCMP;
 	}
-      if ((cell_tl->get() == 0) && (cell_th->get() == 0))
+      else
+	{
+	  count--;
+	}
+      if (count == 0)
 	{
 	  cell_txstat->set_bit1(mask_TF);
 	  overflow();
 	} 
+      refresh_sfr(count);
       CaptureCompare();
     }
 }
+
+template<class T>
 void
-cl_CC2530_timer::overflow(void)
+cl_CC2530_timer<T>::overflow(void)
 {
   inform_partners(EV_OVERFLOW, 0);
-  fprintf(stderr,"Timer 1 overflow !\n");
+  fprintf(stderr,"%s overflow !\n", id_string);
   print_info();
 }
 
-
+template<class T>
 void
-cl_CC2530_timer::print_info(class cl_console *con)
+cl_CC2530_timer<T>::refresh_sfr(char count)
+{
+  cell_tl->set(count & 0xFF); 
+}
+
+template<class T>
+void
+cl_CC2530_timer<T>::refresh_sfr(short int count)
+{
+  cell_tl->set(count & 0xFF); 
+  cell_th->set(count>>8);
+}
+
+template<class T>
+void
+cl_CC2530_timer<T>::print_info(class cl_console *con)
 {
   print_info();
 }
 
+template<class T>
 void
-cl_CC2530_timer::print_info()
+cl_CC2530_timer<T>::print_info()
 {
-  char *modes[]= { "Timer stopped", "Free running mode", "Modulo mode", "Up/down Mode" };
+
   int on;
 
-  fprintf(stderr,"\n*************%s[%d] Count: 0x%04x", id_string, id,
-		 256*cell_th->get()+cell_tl->get());
+  fprintf(stderr,"\n***********  %s[%d] Count: 0x%04x", id_string, id,
+		 count);
   fprintf(stderr," %s*************\n", modes[mode]);
   fprintf(stderr,"Prescale value: %d\t\tSystem clk division: %d\n", 
 	  prescale, tickspd);
@@ -593,5 +593,8 @@ cl_CC2530_timer::print_info()
 	fprintf(stderr,"\n");	
     }
   fprintf(stderr,"\n*********************************");
-  fprintf(stderr,"***********************************\n\n");
+  fprintf(stderr,"****************************************\n\n");
 }
+
+template class cl_CC2530_timer<short int>;
+template class cl_CC2530_timer<char>;

@@ -727,6 +727,16 @@ cl_address_space::cl_address_space(char *id, t_addr astart, t_addr asize,
       cells[i]= new cl_memory_cell();
       cells[i]->init();
     }
+  sfr = uc->memory("sfr");
+  rom = uc->memory("rom");
+  xram = uc->memory("xram");
+  sram = uc->memory("sram");
+  iram = uc->memory("iram");
+  flashbank0 = uc->memory("flashbank0");
+  flashbank1 = uc->memory("flashbank1");
+  flashbank2 = uc->memory("flashbank2");
+  flashbank3 = uc->memory("flashbank3");
+  asname = get_name();
   //  fprintf(stderr,"Created memory ID: %s\n", this->name);
   dummy= new cl_dummy_cell();
 }
@@ -762,19 +772,6 @@ cl_address_space::~cl_address_space(void)
 t_mem
 cl_address_space::read(t_addr addr)
 {
-
-
-  class cl_memory *sfr = uc->memory("sfr");
-  class cl_memory *rom = uc->memory("rom");
-  class cl_memory *xram = uc->memory("xram");
-  class cl_memory *sram = uc->memory("sram");
-  class cl_memory *iram = uc->memory("iram");
-  class cl_memory *flashbank0 = uc->memory("flashbank0");
-  class cl_memory *flashbank1 = uc->memory("flashbank1");
-  class cl_memory *flashbank2 = uc->memory("flashbank2");
-  class cl_memory *flashbank3 = uc->memory("flashbank3");
-  char *asname = get_name();
- 
   t_addr idx= addr-start_address;
 
   if (asname == rom->get_name()){
@@ -879,17 +876,6 @@ cl_address_space::read(t_addr addr, enum hw_cath skip)
 t_mem
 cl_address_space::get(t_addr addr)
 {
-  char *asname = get_name();
-  class cl_memory *sfr = uc->memory("sfr");
-  class cl_memory *flashbank0 = uc->memory("flashbank0");
-  class cl_memory *flashbank1 = uc->memory("flashbank1");
-  class cl_memory *flashbank2 = uc->memory("flashbank2");
-  class cl_memory *flashbank3 = uc->memory("flashbank3");
-  class cl_memory *rom = uc->memory("rom");
-  class cl_memory *xram = uc->memory("xram");
-  class cl_memory *sram = uc->memory("sram");
-  class cl_memory *iram = uc->memory("iram");
-
   t_addr idx= addr-start_address;
 
   if (asname == rom->get_name()){
@@ -969,15 +955,6 @@ cl_address_space::get(t_addr addr)
 t_mem
 cl_address_space::write(t_addr addr, t_mem val)
 {
-  class cl_memory *sram = uc->memory("sram");
-  class cl_memory *iram = uc->memory("iram");
-  class cl_memory *xram = uc->memory("xram");
-  class cl_memory *flashbank0 = uc->memory("flashbank0");
-  class cl_memory *flashbank1 = uc->memory("flashbank1");
-  class cl_memory *flashbank2 = uc->memory("flashbank2");
-  class cl_memory *flashbank3 = uc->memory("flashbank3");
-  class cl_memory *sfr = uc->memory("sfr");
-  char *asname = get_name();
   t_addr idx= addr-start_address;
   if (idx >= size ||
       addr < start_address)
@@ -1027,15 +1004,6 @@ cl_address_space::write(t_addr addr, t_mem val)
 void
 cl_address_space::set(t_addr addr, t_mem val)
 {
-  char *asname = get_name();
-  class cl_memory *xram = uc->memory("xram");
-  class cl_memory *sram = uc->memory("sram");
-  class cl_memory *iram = uc->memory("iram");
-  class cl_memory *flashbank0 = uc->memory("flashbank0");
-  class cl_memory *flashbank1 = uc->memory("flashbank1");
-  class cl_memory *flashbank2 = uc->memory("flashbank2");
-  class cl_memory *flashbank3 = uc->memory("flashbank3");
-  class cl_memory *sfr = uc->memory("sfr");
   t_addr idx= addr-start_address;
 
   if (idx >= size ||

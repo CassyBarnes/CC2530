@@ -63,6 +63,30 @@ cl_it_src::cl_it_src(uchar Iie_mask,
   active= DD_TRUE;
 }
 
+cl_it_src::cl_it_src(uchar Iie_mask,
+		     uchar Iie_Reg,
+		     uchar Isrc_reg,
+		     uchar Isrc_mask,
+		     uint  Iaddr,
+		     bool  Iclr_bit,
+		     char  *Iname,
+		     int   apoll_priority):
+  cl_base()
+{
+  poll_priority= apoll_priority;
+  ie_mask = Iie_mask;
+  ie_reg = Iie_Reg;
+  src_reg = Isrc_reg;
+  src_mask= Isrc_mask;
+  addr    = Iaddr;
+  clr_bit = Iclr_bit;
+  if (Iname != NULL)
+    set_name(Iname);
+  else
+    set_name("unknown");
+  active= DD_TRUE;
+}
+
 cl_it_src::~cl_it_src(void) {}
 
 bool

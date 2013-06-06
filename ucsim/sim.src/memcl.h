@@ -281,7 +281,17 @@ protected:
   class cl_memory_cell **cells, *dummy;
 public:
   class cl_decoder_list *decoders;
-public:
+  class cl_memory *sfr;
+  class cl_memory *rom;
+  class cl_memory *xram;
+  class cl_memory *sram;
+  class cl_memory *iram;
+  class cl_memory *flashbank0;
+  class cl_memory *flashbank1;
+  class cl_memory *flashbank2;
+  class cl_memory *flashbank3;
+  char *asname;
+
   cl_address_space(char *id, t_addr astart, t_addr asize, int awidth, t_addr aoffset);
   cl_address_space(char *id, t_addr astart, t_addr asize, int awidth);
   virtual ~cl_address_space(void);

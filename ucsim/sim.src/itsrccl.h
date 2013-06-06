@@ -41,6 +41,7 @@ class cl_it_src: public cl_base
 public:
   int poll_priority;
   uchar ie_mask;  // Mask in IE register
+  uchar ie_reg;   // Reg containing IE 
   uchar src_reg;  // Register in SFR of source
   uchar src_mask; // Mask of source bit in src_reg
   uint  addr;     // Address of service routine
@@ -55,6 +56,16 @@ public:
 	    bool  Iclr_bit,
 	    char  *Iname,
 	    int   apoll_priority);
+
+  cl_it_src(uchar Iie_mask,
+	    uchar Iie_reg,
+	    uchar Isrc_reg,
+	    uchar Isrc_mask,
+	    uint  Iaddr,
+	    bool  Iclr_bit,
+	    char  *Iname,
+	    int   apoll_priority);
+
   virtual ~cl_it_src(void);
 
           bool is_active(void);

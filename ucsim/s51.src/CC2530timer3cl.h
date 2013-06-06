@@ -5,19 +5,21 @@
 #include "uccl.h"
 #include "CC2530timercl.h"
 
-class cl_CC2530_timer3: public cl_CC2530_timer
+class cl_CC2530_timer3: public cl_CC2530_timer<char>
 {
+ protected:
+
+  class cl_memory_cell *cell_t3cc0;
+  class cl_memory_cell *cell_t3cc1;
 
 public:
 
   cl_CC2530_timer3(class cl_uc *auc, int aid, char *aid_string);
   virtual int init(void);
-
-  //virtual void added_to_uc(void);
+  virtual void write(class cl_memory_cell *cell, t_mem *val);
   virtual void reset(void);
+  virtual void TimerTick(int TimerTicks);
   virtual int tick(int cycles);
-
-  //virtual void happen(class cl_hw *where, enum hw_event he, void *params);
 
 };
 

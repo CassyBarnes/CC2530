@@ -45,6 +45,7 @@
 #include "CC2530timercl.h" 
 #include "CC2530timer1cl.h" 
 #include "CC2530timer3cl.h" 
+#include "CC2530timer4cl.h" 
 #include "interruptcl.h"
 
 #define DEBUG
@@ -88,6 +89,7 @@ public:
   class cl_memory_cell *acc, *psw;
   cl_CC2530_timer1  *CC2530timer1;
   cl_CC2530_timer3  *CC2530timer3;
+  cl_CC2530_timer4  *CC2530timer4;
 
 public:
   // Help to detect external it requests (falling edge)

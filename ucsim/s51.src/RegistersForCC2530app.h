@@ -44,7 +44,7 @@
 #define T2MOVF1	0XA5
 #define T2MOVF2	0XA6
 #define T2IRQM	0XA7
-#define IE0	0XA8
+#define IE	0XA8
 #define EXIF	0XA9
 #define IEN1	0XAA
 #define P0IEN	0XAB

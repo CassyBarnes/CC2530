@@ -4,23 +4,24 @@
 #include "memcl.h"
 #include "uccl.h"
 
+template <typename T>
 struct channel {
   bool IOPin;
   bool ExIOPin;
-  int captureRisingEdge;
-  int captureFallEdge;
+  t_addr RegCTL;
   t_addr RegCMPL;
   t_addr RegCMPH;
-  t_addr RegCTL;
+  T ValRegCMP;
 };
 
-
+template <class T>
 class cl_CC2530_timer: public cl_hw
 {
 protected:
-  class cl_memory_cell *cell_txstat, *cell_txctl, *cell_clkconcmd, *cell_tl, *cell_th;
+  T count;
+  class cl_memory_cell  *cell_clkconcmd, *cell_txstat, *cell_txctl, *cell_tl, *cell_th;
   t_mem mask_M0, mask_M1, mask_TF, captureMode;
-  t_addr addr_tl, addr_th, TxCC0L, TxCC0H;
+  t_addr addr_tl, addr_th;
   bool up_down, cc, risingEdge;
   int mode;
   int ChMax;
@@ -28,12 +29,14 @@ protected:
   bool capt;
   int ctrl;
   int tickcount;
+  int TimerTicks;
   int  tickspd;
   int  prescale;
-  double ticks, freq;
+  double ticks, freq, systemTicks, MemElapsedTime, MemSystemTicks;
   double CC2530xtal;
-  struct channel tabCh[5];
+  struct channel<T> tabCh[5];
   class cl_address_space *sfr, *xram;
+  char *modes[4];
 
 public:
 
@@ -43,7 +46,7 @@ public:
   virtual void added_to_uc(void);
   virtual void CaptureCompare(void);
   virtual bool Capture(bool& IOPin, bool& ExIOPin, int captureMode);
-  virtual int Compare(int IOPinChn, t_addr ctrlReg, t_addr T1CCnH, t_addr T1CCnL);
+  virtual bool Compare(bool IOPinChn, t_addr ctrlReg,  T TxCCn);
   virtual void reset(void);
   virtual double get_rtime(void);
   virtual void write(class cl_memory_cell *cell, t_mem *val);
@@ -56,7 +59,8 @@ public:
   virtual int do_DownMode(int cycles);
   virtual void overflow(void);
   //virtual void happen(class cl_hw *where, enum hw_event he, void *params);
-
+  virtual void refresh_sfr(char count);
+  virtual void refresh_sfr(short int count);
   virtual void print_info(class cl_console *con);
   virtual void print_info();
 };
