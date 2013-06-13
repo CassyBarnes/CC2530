@@ -153,6 +153,8 @@ cl_51core::mk_hw_elements(void)
   CC2530timer1 = new cl_CC2530_timer1(this, 1, "CC2530timer1");
   hws->add(CC2530timer1);
   //h->init();//Calypso
+  CC2530_MAC_timer = new cl_CC2530_timer2(this, 1, "CC2530_MAC_timer");
+  hws->add(CC2530_MAC_timer);
   CC2530timer3 = new cl_CC2530_timer3(this, 1, "CC2530timer3");
   hws->add(CC2530timer3);
   CC2530timer4 = new cl_CC2530_timer4(this, 1, "CC2530timer4");
@@ -314,6 +316,15 @@ cl_51core::make_memories(void)
   ad->activate(0);
 
   /* ******************************* */
+  rom->define_memories();
+  iram->define_memories();
+  sfr->define_memories();
+  xram->define_memories();
+  flashbank0->define_memories();
+  flashbank1->define_memories();
+  flashbank2->define_memories();
+  flashbank3->define_memories();
+  sram->define_memories();
 
   acc= sfr->get_cell(ACC);
   psw= sfr->get_cell(PSW);
@@ -1086,14 +1097,14 @@ cl_51core::do_interrupt(void)
       interrupt->was_reti= DD_FALSE;
       return(resGO);
     }
-  if (!((ie= sfr->get(IE)) & bmEA))
+  if (!((ie= sfr->get(IEN0)) & bmEA))
     return(resGO);
   class it_level *il= (class it_level *)(it_levels->top()), *IL= 0;
   for (i= 0; i < it_sources->count; i++)
     {
       class cl_it_src *is= (class cl_it_src *)(it_sources->at(i));
       if (is->is_active() &&
-	  (ie & is->ie_mask) &&
+	  (sfr->get(is->ie_reg) & is->ie_mask) &&
 	  (sfr->get(is->src_reg) & is->src_mask))
 	{
 	  int pr= it_priority(is->ie_mask);

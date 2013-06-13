@@ -727,16 +727,6 @@ cl_address_space::cl_address_space(char *id, t_addr astart, t_addr asize,
       cells[i]= new cl_memory_cell();
       cells[i]->init();
     }
-  sfr = uc->memory("sfr");
-  rom = uc->memory("rom");
-  xram = uc->memory("xram");
-  sram = uc->memory("sram");
-  iram = uc->memory("iram");
-  flashbank0 = uc->memory("flashbank0");
-  flashbank1 = uc->memory("flashbank1");
-  flashbank2 = uc->memory("flashbank2");
-  flashbank3 = uc->memory("flashbank3");
-  asname = get_name();
   //  fprintf(stderr,"Created memory ID: %s\n", this->name);
   dummy= new cl_dummy_cell();
 }
@@ -766,6 +756,21 @@ cl_address_space::~cl_address_space(void)
     if (cells[i])
       delete cells[i];
   delete dummy;
+}
+
+void
+cl_address_space::define_memories(void)
+{
+  sfr = uc->memory("sfr");
+  rom = uc->memory("rom");
+  xram = uc->memory("xram");
+  sram = uc->memory("sram");
+  iram = uc->memory("iram");
+  flashbank0 = uc->memory("flashbank0");
+  flashbank1 = uc->memory("flashbank1");
+  flashbank2 = uc->memory("flashbank2");
+  flashbank3 = uc->memory("flashbank3");
+  asname = get_name();
 }
 
   

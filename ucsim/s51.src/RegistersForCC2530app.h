@@ -44,7 +44,7 @@
 #define T2MOVF1	0XA5
 #define T2MOVF2	0XA6
 #define T2IRQM	0XA7
-#define IE	0XA8
+#define IEN0	0XA8
 #define EXIF	0XA9
 #define IEN1	0XAA
 #define P0IEN	0XAB
@@ -168,5 +168,18 @@
 #define bmCH2IF	0x04
 #define bmCH1IF	0x02
 #define bmCH0IF	0x01
+
+/* Bit masks in TIMIF */
+
+#define bmT1OVFIM	0x40
+#define bmT4CH1IF	0x20
+#define bmT4CH0IF	0x10
+#define bmT4OVFIF	0x08
+#define bmT3CH1IF	0x04
+#define bmT3CH0IF	0x02
+#define bmT3OVFIF	0x01
+
+#define bmT2IE  0x04
+#define bmT2IF  0x04
 
 #endif

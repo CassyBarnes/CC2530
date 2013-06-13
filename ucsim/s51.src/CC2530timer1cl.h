@@ -24,6 +24,7 @@ public:
 
   cl_CC2530_timer1(class cl_uc *auc, int aid, char *aid_string);
   virtual int init(void);
+  virtual void added_to_uc(void);
   virtual void TimerTick(int TimerTicks);
   virtual void reset(void);
   virtual void write(class cl_memory_cell *cell, t_mem *val);

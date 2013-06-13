@@ -297,7 +297,7 @@ public:
   virtual ~cl_address_space(void);
 
   virtual bool is_address_space(void) { return(DD_TRUE); }
-
+  virtual void define_memories(void);
   virtual t_mem read(t_addr addr);
   virtual t_mem read(t_addr addr, enum hw_cath skip);
   virtual t_mem get(t_addr addr);

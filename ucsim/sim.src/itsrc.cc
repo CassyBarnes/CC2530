@@ -87,6 +87,7 @@ cl_it_src::cl_it_src(uchar Iie_mask,
   active= DD_TRUE;
 }
 
+
 cl_it_src::~cl_it_src(void) {}
 
 bool

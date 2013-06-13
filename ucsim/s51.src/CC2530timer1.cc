@@ -72,6 +72,24 @@ cl_CC2530_timer1::init(void)
 }
 
 void
+cl_CC2530_timer1::added_to_uc(void)
+{
+  //overflow interrupt
+  uc->it_sources->add(new cl_it_src(IEN1, bmT1IE, T1STAT, bmOVFIF, 0x004b, true,
+				    "timer #1 overflow", 4));
+  uc->it_sources->add(new cl_it_src(IEN1, bmT1IE, T1STAT, bmCH0IF, 0x004b, true,
+				    "timer #1 Channel 0 interrupt", 4));
+  uc->it_sources->add(new cl_it_src(IEN1, bmT1IE, T1STAT, bmCH1IF, 0x004b, true,
+				    "timer #1 Channel 1 interrupt", 4));
+  uc->it_sources->add(new cl_it_src(IEN1, bmT1IE, T1STAT, bmCH2IF, 0x004b, true,
+				    "timer #1 Channel 2 interrupt", 4));
+  uc->it_sources->add(new cl_it_src(IEN1, bmT1IE, T1STAT, bmCH3IF, 0x004b, true,
+				    "timer #1 Channel 3 interrupt", 4));
+  uc->it_sources->add(new cl_it_src(IEN1, bmT1IE, T1STAT, bmCH4IF, 0x004b, true,
+				    "timer #1 Channel 4 interrupt", 4));
+}
+
+void
 cl_CC2530_timer1::reset(void)
 {
   cell_tl->write(0);

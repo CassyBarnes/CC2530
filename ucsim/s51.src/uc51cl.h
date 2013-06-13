@@ -44,6 +44,7 @@
 
 #include "CC2530timercl.h" 
 #include "CC2530timer1cl.h" 
+#include "CC2530timer2cl.h" 
 #include "CC2530timer3cl.h" 
 #include "CC2530timer4cl.h" 
 #include "interruptcl.h"
@@ -88,6 +89,7 @@ public:
   class cl_address_space *sram;//Modif by Calypso for CC2530
   class cl_memory_cell *acc, *psw;
   cl_CC2530_timer1  *CC2530timer1;
+  cl_CC2530_timer2  *CC2530_MAC_timer;
   cl_CC2530_timer3  *CC2530timer3;
   cl_CC2530_timer4  *CC2530timer4;
 
