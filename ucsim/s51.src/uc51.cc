@@ -159,6 +159,10 @@ cl_51core::mk_hw_elements(void)
   hws->add(CC2530timer3);
   CC2530timer4 = new cl_CC2530_timer4(this, 1, "CC2530timer4");
   hws->add(CC2530timer4);
+  CC2530usart0 = new cl_CC2530_usart(this, 0, "CC2530usart0");
+  hws->add(CC2530usart0);
+  CC2530usart1 = new cl_CC2530_usart(this, 1, "CC2530usart1");
+  hws->add(CC2530usart1);
   //h->init();//Calypso
   hws->add(h= new cl_serial(this));
   h->init();

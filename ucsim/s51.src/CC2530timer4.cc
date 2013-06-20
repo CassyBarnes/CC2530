@@ -16,7 +16,7 @@ fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
 cl_CC2530_timer4::cl_CC2530_timer4(class cl_uc *auc, int aid, char *aid_string):
   cl_CC2530_timer<char>(auc, aid, aid_string)
 {
-  TRACE();
+  //TRACE();
   addr_tl  = T4CNT;
   sfr= uc->address_space(MEM_SFR_ID);
   ChMax=2;
@@ -74,12 +74,12 @@ cl_CC2530_timer4::added_to_uc(void)
 void
 cl_CC2530_timer4::write(class cl_memory_cell *cell, t_mem *val)
 {
-  TRACE();
+  //TRACE();
   cl_CC2530_timer::write(cell, val);
-  TRACE();
+  //TRACE();
   if (cell == cell_txctl)
     {
-      TRACE();
+      //TRACE();
 	TR=*val & 0x10;
       if (*val & 0x04 == 1)
 	reset();
@@ -103,13 +103,13 @@ cl_CC2530_timer4::write(class cl_memory_cell *cell, t_mem *val)
     }
   if (cell == cell_t4cc0)
     {
-      TRACE();
+      //TRACE();
       tabCh[0].ValRegCMP =*val;
       fprintf(stderr, "Modif of cmp reg on channel 0: 0x%04x\n",tabCh[0].ValRegCMP);
     }
   else if (cell == cell_t4cc1)
     {
-      TRACE();
+      //TRACE();
       tabCh[1].ValRegCMP =*val;
       fprintf(stderr, "Modif of cmp reg on channel 1: 0x%04x\n",tabCh[1].ValRegCMP);
     }
@@ -126,7 +126,7 @@ cl_CC2530_timer4::reset(void)
 int
 cl_CC2530_timer4::tick(int cycles)
 {
-  TRACE();
+  //TRACE();
   TimerTicks=0;
   for (int i = 0; i<cycles; i++)
     {
@@ -142,9 +142,9 @@ cl_CC2530_timer4::tick(int cycles)
 void
 cl_CC2530_timer4::TimerTick(int TimerTicks)
 {
-  TRACE();
+  //TRACE();
   cl_CC2530_timer::tick(TimerTicks);
-  TRACE();
+  //TRACE();
 
   if (TR != 0)
     {

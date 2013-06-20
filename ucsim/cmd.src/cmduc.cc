@@ -40,7 +40,13 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "cmduccl.h"
 using namespace std;
 
-
+#define DEBUG
+#ifdef DEBUG
+#define TRACE() \
+fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
+#else
+#define TRACE()
+#endif
 
 /*
  * Command: state

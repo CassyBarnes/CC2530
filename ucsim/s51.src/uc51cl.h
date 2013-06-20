@@ -47,6 +47,7 @@
 #include "CC2530timer2cl.h" 
 #include "CC2530timer3cl.h" 
 #include "CC2530timer4cl.h" 
+#include "CC2530usartcl.h" 
 #include "interruptcl.h"
 
 #define DEBUG
@@ -92,6 +93,8 @@ public:
   cl_CC2530_timer2  *CC2530_MAC_timer;
   cl_CC2530_timer3  *CC2530timer3;
   cl_CC2530_timer4  *CC2530timer4;
+  cl_CC2530_usart  *CC2530usart0;
+  cl_CC2530_usart  *CC2530usart1;
 
 public:
   // Help to detect external it requests (falling edge)

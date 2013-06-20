@@ -47,6 +47,14 @@
 #include "memcl.h"
 #include "hwcl.h"
 
+#define DEBUG
+#ifdef DEBUG
+#define TRACE() \
+fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
+#else
+#define TRACE()
+#endif
+
 #include "../s51.src/regs51.h"
 
 #define DEBUG
@@ -188,7 +196,6 @@ cl_memory::dump(t_addr start, t_addr stop, int bpl, class cl_console *con)
   int i;
   t_addr lva= lowest_valid_address();
   t_addr hva= highest_valid_address();
-
   if (start < lva)
     start= lva;
   if (stop > hva)
@@ -360,7 +367,9 @@ cl_hw_operator::read(void)
   t_mem d= 0;
 
   if (hw)
-    d= hw->read(cell);
+    {
+      d= hw->read(cell);
+    }
 
   if (next_operator)
     next_operator->read();
@@ -432,6 +441,7 @@ t_mem
 cl_read_operator::read(void)
 {
   //printf("read event at 0x%x bp=%p\n",address,bp);
+  TRACE();
   uc->events->add(bp);
   if (next_operator)
     return(next_operator->read());

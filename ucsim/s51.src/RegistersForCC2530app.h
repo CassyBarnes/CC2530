@@ -181,5 +181,45 @@
 
 #define bmT2IE  0x04
 #define bmT2IF  0x04
+#define bmT3IF  0x08
+
+
+
+/*USART*/
+
+#define bmURX0IF 0x08
+#define bmUTX0IF 0x02
+#define bmURX0IE 0x04
+#define bmUTX0IE 0x04
+#define bmURX1IF 0x80
+#define bmUTX1IF 0x04
+#define bmURX1IE 0x08
+#define bmUTX1IE 0x08
+
+/*UxGCR*/
+#define bmCpol    0x80
+#define bmCpha    0x40
+#define bmOrder   0x20
+#define bmBaud_e  0x1F
+
+/*UxCSR*/
+#define bmMode    0x80
+#define bmRe      0x40
+#define bmSlave   0x20
+#define bmFe      0x10
+#define bmErr     0x08
+#define bmRx_byte 0x04
+#define bmTx_byte 0x02
+#define bmActive  0x01
+
+/*UxUCR*/
+#define bmFlush    0x80
+#define bmFlow     0x40
+#define bmD9       0x20
+#define bmBit9     0x10
+#define bmParity   0x08
+#define bmSPB      0x04
+#define bmStop     0x02
+#define bmStart    0x01
 
 #endif

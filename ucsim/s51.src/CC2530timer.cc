@@ -36,7 +36,7 @@ template<class T>
 int
 cl_CC2530_timer<T>::init(void)
 {
-  TRACE();
+  ////TRACE();
   class cl_address_space *sfr= uc->address_space(MEM_SFR_ID);
   CC2530xtal=32000000;
   fprintf(stderr, "CC2530xtal init at %g Hz\n", CC2530xtal);
@@ -48,7 +48,7 @@ template<class T>
 int
 cl_CC2530_timer<T>::tick(int cycles)
 {
-  TRACE();
+  ////TRACE();
   fprintf(stderr, "%s\n", id_string);
   fprintf(stderr, "tick! %g ticks... %d cycles. Time elapsed: %g s\n", systemTicks, cycles, get_rtime());
   fprintf(stderr, "Mode: %d\n", mode);
@@ -85,10 +85,10 @@ void
 cl_CC2530_timer<T>::CaptureCompare(void)
 {
   cc=0;
-  TRACE();
+  ////TRACE();
   if (ChMax>3)
     {
-      TRACE();
+      ////TRACE();
       for (int i=0; i<3; i++)
 	{
 	  //Possible capture/compare cases
@@ -120,7 +120,7 @@ cl_CC2530_timer<T>::CaptureCompare(void)
 		  ||(count == tabCh[i].ValRegCMP)
 		  ||(count == 0))
 		{
-		  TRACE();
+		  ////TRACE();
 		  tabCh[i].IOPin=Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].ValRegCMP);
 		  cc=1;
 		}
@@ -147,7 +147,7 @@ cl_CC2530_timer<T>::CaptureCompare(void)
 		  ||(count == tabCh[i].ValRegCMP)
 		  ||(count == 0))
 		{
-		  TRACE();
+		  ////TRACE();
 		  tabCh[i].IOPin=Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].ValRegCMP);
 		  cc=1;
 		}
@@ -179,7 +179,7 @@ cl_CC2530_timer<T>::CaptureCompare(void)
 		  ||(count == tabCh[i].ValRegCMP)
 		  ||(count == 0))
 		{
-		  TRACE();
+		  ////TRACE();
 		  tabCh[i].IOPin=Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].ValRegCMP);
 		  cc=1;
 		}
@@ -224,7 +224,7 @@ template<class T>
 bool
 cl_CC2530_timer<T>::Compare(bool IOPinChn, t_addr ctrlReg, T TxCCn)
 {
-  TRACE();
+  ////TRACE();
   if (ctrlReg == T1CCTL3 || ctrlReg == T1CCTL4)
     ctrl=xram->read(ctrlReg);
   else
@@ -379,7 +379,6 @@ cl_CC2530_timer<T>::write(class cl_memory_cell *cell, t_mem *val)
     }
   else if (cell == cell_clkconcmd)
     {
-      TRACE();
       switch(*val & 0x07)
 	{ 
 	case 0: tickspd= 1; break;
@@ -396,7 +395,7 @@ cl_CC2530_timer<T>::write(class cl_memory_cell *cell, t_mem *val)
       MemSystemTicks = systemTicks;
       systemTicks=0;
       freq= CC2530xtal/(tickspd);
-      fprintf(stderr,"switch value: %d in %s: tickspeed x %d\n",
+      fprintf(stderr,"switch value: %d in %s: tickspeed / %d\n",
 	      *val & 0x07,
 	      __FUNCTION__,
 	      tickspd);
@@ -411,7 +410,7 @@ template<class T>
 int
 cl_CC2530_timer<T>::do_Stop(int cycles)
 {
-  TRACE();
+  ////TRACE();
   return(0);//timer stopped
 }
 
@@ -419,12 +418,12 @@ template<class T>
 int
 cl_CC2530_timer<T>::do_FreeRunningMode(int cycles)//Mode 1: free-running from 0 to FFFF
 {
-  TRACE();
+  ////TRACE();
 
   //While exec of cycles-- !=0, repeat add(1) cycles time
   while (cycles--)
     {
-      TRACE();
+      ////TRACE();
       count++;
       if (count==0)
 	{
@@ -441,7 +440,7 @@ template<class T>
 int
 cl_CC2530_timer<T>::do_ModuloMode(int cycles)//Mode 2: Modulo count from 0 to TxCC0 value
 {
-  TRACE();
+  ////TRACE();
 
   while (cycles--)
     {
@@ -474,7 +473,7 @@ cl_CC2530_timer<T>::do_UpDownMode(int cycles)//mode 3: up/down to TxCC0
 
   while (cycles--)
     {
-      TRACE();
+      ////TRACE();
       //Count up 
       if (!up_down)
 	{
@@ -565,8 +564,6 @@ template<class T>
 void
 cl_CC2530_timer<T>::print_info()
 {
-
-  int on;
 
   fprintf(stderr,"\n***********  %s[%d] Count: 0x%04x", id_string, id,
 		 count);
