@@ -12,12 +12,14 @@ fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
 #define TRACE()
 #endif
 
+#ifndef CC2530xtal
+#define CC2530xtal 32000000
+#endif
 
 cl_CC2530_timer2::cl_CC2530_timer2(class cl_uc *auc, int aid, char *aid_string):
   cl_hw(auc, HW_TIMER, aid, aid_string)
 {
   sfr= uc->address_space(MEM_SFR_ID);
-  xram= uc->address_space(MEM_XRAM_ID);
   init();
 }
 
@@ -25,9 +27,8 @@ int
 cl_CC2530_timer2::init(void)
 {
   TRACE();
-  class cl_address_space *sfr= uc->address_space(MEM_SFR_ID);
-  CC2530xtal=32000000;
-  fprintf(stderr, "CC2530xtal init at %g Hz\n", CC2530xtal);
+  //CC2530xtal=32000000;
+  fprintf(stderr, "CC2530xtal init at %d Hz\n", CC2530xtal);
   events[0] = "1 (Period)";
   events[1] = "1 (Compare 1)";
   events[2] = "1 (Compare 2)";
@@ -36,13 +37,13 @@ cl_CC2530_timer2::init(void)
   events[5] = "1 (OVF Compare 2)";
   events[6] = "0";
   assert(sfr);
-  TimerTicks=0;
-  ticks=0;
-  freq=CC2530xtal;
-  count=0;
+  TimerTicks = 0;
+  ticks = 0;
+  freq = CC2530xtal;
+  count = 0;
   mode = 0;
-  modes[0]= "   Up Mode   ";
-  modes[1]= " Delta Mode  ";
+  modes[0] = "   Up Mode   ";
+  modes[1] = " Delta Mode  ";
 
   register_cell(sfr, T2CTRL, &cell_t2ctrl, wtd_restore_write);
   register_cell(sfr, T2EVTCFG, &cell_t2evtcfg, wtd_restore_write);
@@ -65,7 +66,7 @@ cl_CC2530_timer2::tick(int cycles)
   TimerTicks += cycles;
   systemTicks += cycles;
   TRACE();
-  fprintf(stderr, "%s\n", id_string);
+  fprintf(stderr, "************* %s *************\n", id_string);
   fprintf(stderr, "tick! %g ticks... %d cycles. Time elapsed: %g s\n", TimerTicks, cycles, get_rtime());
   fprintf(stderr, "Mode: %s\n", modes[mode]);
   //if (run == 1)
@@ -166,7 +167,7 @@ cl_CC2530_timer2::write(class cl_memory_cell *cell, t_mem *val)
     }
   else if (cell == cell_clkconcmd)
     {
-      switch(*val & 0x07)
+      switch((*val & bmTickSpd) >> 3)
 	{ 
 	case 0: tickspd= 1; break;
 	case 1: tickspd= 2; break;
@@ -471,7 +472,7 @@ cl_CC2530_timer2::print_info()
   fprintf(stderr,"\n***********  %s[%d] Count: 0x%04x", id_string, id,
 		 count);
   fprintf(stderr," %s*************\n", modes[mode]);
-  fprintf(stderr,"Timer Frequency: %g Hz\tCC2530 Crystal: %g Hz", freq, CC2530xtal);
+  fprintf(stderr,"Timer Frequency: %g Hz\tCC2530 Crystal: %d Hz", freq, CC2530xtal);
   fprintf(stderr,"\nTime elapsed: %g s", get_rtime());
 
   fprintf(stderr,"\n*********************************");

@@ -151,6 +151,12 @@
 #define bmM1	0x02
 #define bmDIV	0x0C
 
+#define bmTimerMode 0x04
+#define bmCaptMode 0x03
+#define bmCmpMode 0x04
+#define bmWTDonCMP 0x38
+#define bmTickSpd 0x38
+
 /* Bit masks in IEN1 */
 
 #define bmP0IE	0x20
@@ -179,11 +185,12 @@
 #define bmT3CH0IF	0x02
 #define bmT3OVFIF	0x01
 
-#define bmT2IE  0x04
+/* Bit masks in IRCON */
+
+#define bmT1IF  0x02
 #define bmT2IF  0x04
 #define bmT3IF  0x08
-
-
+#define bmT4IF  0x10
 
 /*USART*/
 

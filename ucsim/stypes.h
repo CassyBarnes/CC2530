@@ -243,7 +243,8 @@ enum hw_cath {
   HW_INTERRUPT	= 0x0020,
   HW_WDT	= 0x0040,
   HW_CC2530_RADIO = 0x0080,
-  HW_CC2530_USART = 0x0100};
+  HW_CC2530_USART = 0x0100,
+  HW_CC2530_DMA = 0x0200};
 
 // Events that can happen in peripherals
 enum hw_event {

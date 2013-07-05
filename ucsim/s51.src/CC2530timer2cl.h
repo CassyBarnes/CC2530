@@ -24,8 +24,7 @@ class cl_CC2530_timer2: public cl_hw
   char *events[7];
   int tickspd, t2msel, t2movfsel, evtcfg1, evtcfg2;
   bool T2_EVENT1, T2_EVENT2, event, run;
-  class cl_address_space *sfr, *xram;
-  double CC2530xtal;
+  class cl_address_space *sfr;
   double ticks, TimerTicks, systemTicks, MemElapsedTime, MemSystemTicks, freq;
   int mode;
   char OVF0, OVF1, OVF2; 

@@ -99,6 +99,7 @@ class cl_hw: public cl_guiobj
 {
 public:
   int flags;
+  int flagsReg;
   class cl_uc *uc;
   enum hw_cath cathegory;
   int id;

@@ -75,7 +75,6 @@ cl_CC2530_usart::init(void)
   register_cell(sfr, IRCON2, &cell_ircon2, wtd_restore_write);
   stopBitLevel = 1;
   startBitLevel = 0;
-  CC2530xtal=32000000;
   TXD = stopBitLevel;
   RXD = stopBitLevel;
   BaudFactor = 1.0/16;
@@ -106,7 +105,7 @@ cl_CC2530_usart::tick(int cycles)
 {
   while (cycles--)
     {
-      TRACE();
+      //TRACE();
       assert(sfr);
       TickCountForBaud++;
       BaudRate = BaudFactor * CC2530xtal;

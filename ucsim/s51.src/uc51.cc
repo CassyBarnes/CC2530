@@ -163,6 +163,8 @@ cl_51core::mk_hw_elements(void)
   hws->add(CC2530usart0);
   CC2530usart1 = new cl_CC2530_usart(this, 1, "CC2530usart1");
   hws->add(CC2530usart1);
+  CC2530DMA = new cl_CC2530_dma(this, 1, "CC2530DMA");
+  hws->add(CC2530DMA);
   //h->init();//Calypso
   hws->add(h= new cl_serial(this));
   h->init();

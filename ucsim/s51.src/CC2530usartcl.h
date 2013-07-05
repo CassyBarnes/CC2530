@@ -3,6 +3,9 @@
 #include "memcl.h"
 #include "uccl.h"
 
+#ifndef CC2530xtal
+#define CC2530xtal 32000000
+#endif
 
 class cl_CC2530_usart: public cl_hw
 {
@@ -53,7 +56,6 @@ class cl_CC2530_usart: public cl_hw
   int bitTxCnt;
   int BitNumber;
   int StopBits;
-  int CC2530xtal;
   int queue;
   int baud_m;
   int baud_e;
