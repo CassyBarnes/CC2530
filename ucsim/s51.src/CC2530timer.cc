@@ -12,6 +12,8 @@
 #define TRACE()
 #endif
 
+
+
 #ifndef CC2530xtal
 #define CC2530xtal 32000000
 #endif
@@ -21,10 +23,10 @@ cl_CC2530_timer<T>::cl_CC2530_timer(class cl_uc *auc, int aid, char *aid_string)
   cl_hw(auc, HW_TIMER, aid, aid_string)
 {
   volatile int callnbr = 0;
-#ifdef DEBUG
+  /*#ifdef DEBUG
   callnbr++;
   fprintf(stderr, "Called %d times\n\n", callnbr);
-#endif
+  #endif*/
   mask_M0  = bmM0;//M0 and M1 used to select mode
   mask_M1  = bmM1;
   sfr= uc->address_space(MEM_SFR_ID);
@@ -56,14 +58,19 @@ cl_CC2530_timer<T>::tick(int cycles)
       if (((int)systemTicks % prescale) == 0)
 	TimerTicks++;
     }
+
+#ifdef TINFO
   ////TRACE();
   fprintf(stderr, "\n************* %s *************\n", id_string);
   fprintf(stderr, "tick! %g ticks since reset/clkconcmd modif... %d cycles. Time elapsed: %g s\n", systemTicks, cycles, get_rtime());
   fprintf(stderr, "Tick Frequency: CPU Freq (%d MHz) / %d\n", 32/tickspd, prescale);
   fprintf(stderr, "Mode: %s\n\n", modes[mode]);
+#endif
   if (TimerTicks != 0)
     TimerTick(TimerTicks);
-  fprintf(stderr, "Count: %d\n",count);
+  fprintf(stderr, "%s Count: %d\n", id_string, count);
+
+
   return(resGO);
 }
 
@@ -278,6 +285,7 @@ cl_CC2530_timer<T>::write(class cl_memory_cell *cell, t_mem *val)
       MemSystemTicks = systemTicks;
       systemTicks=0;
       freq= CC2530xtal/(tickspd);
+#ifdef TINFO
       fprintf(stderr,"switch value: %d in %s: tickspeed / %d\n",
 	      (*val & bmTickSpd) >> 3,
 	      __FUNCTION__,
@@ -286,6 +294,7 @@ cl_CC2530_timer<T>::write(class cl_memory_cell *cell, t_mem *val)
       fprintf(stderr,
 	      "Prescale value: %d Tick Speed: /%d Frequency: %g Hz Crystal:%d Hz\n"
 	      ,prescale, tickspd, freq, CC2530xtal);
+#endif
     }
 }
 

@@ -1,4 +1,4 @@
-#define DBG_RADIO
+//#define DBG_RADIO
 /*
  * Simulator of microcontrollers (interrupt.cc)
  *

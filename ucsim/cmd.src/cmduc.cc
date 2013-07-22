@@ -311,8 +311,8 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
       t_addr r_end   = tab[i]->xram_offset + tab[i]->start_address + tab[i]->size;
  
 
-      //    fprintf(stderr,"Case of %s, start 0x%02x, end 0x%02x, offset 0x%02x\n",
-      //	      tab[i]->name, r_start, r_end, offset);
+      //fprintf(stderr,"Case of %s, start 0x%02x, end 0x%02x, offset 0x%02x\n",
+      //	      tab[i]->name, r_start, r_end, tab[i]->xram_offset);
       if (i==1) 
 	r_end = r_end - 0x100;//sram case (sram_end-100 is beginning of iram)
 
@@ -366,7 +366,10 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
     mem->dump(d_start, d_end, bpl, con);    
   }
   else {
+    //fprintf(stderr,"About to dump %s, from @ 0x%04x to 0x%04x\n",
+    // mem->name, d_start, d_end); 
     mem->dump(d_start, d_end, bpl, con);
+
   }
   return(DD_FALSE);
 }

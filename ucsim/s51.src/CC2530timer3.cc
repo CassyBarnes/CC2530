@@ -4,7 +4,9 @@
 #include "regs51.h"
 #include "types51.h"
 
+#ifdef T3INFO
 #define DEBUG
+#endif
 #ifdef DEBUG
 #define TRACE() \
 fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
@@ -90,23 +92,29 @@ cl_CC2530_timer3::write(class cl_memory_cell *cell, t_mem *val)
 	reset();
       prescale = 1 << (*val>>5);
       freq= CC2530xtal/tickspd;
+#ifdef T3INFO
       fprintf(stderr,"Modification of %s control register.\n", id_string);
       fprintf(stderr,
 	      "Prescale value: %d Tick Speed: /%d Frequency: %g Hz Crystal: %d Hz\n",
 	      prescale, tickspd, freq, CC2530xtal);
+#endif
     }
   if (cell == cell_t3cc0)
     {
       //TRACE();
       tabCh[0].ValRegCMP =*val;
+#ifdef T3INFO
       fprintf(stderr, "Modif of cmp reg on channel 0: 0x%04x\n",tabCh[0].ValRegCMP);
+#endif
       get_next_cc_event();
     }
   else if (cell == cell_t3cc1)
     {
       //TRACE();
       tabCh[1].ValRegCMP =*val;
+#ifdef T3INFO
       fprintf(stderr, "Modif of cmp reg on channel 1: 0x%04x\n",tabCh[1].ValRegCMP);
+#endif
       get_next_cc_event();
     }
 }
@@ -132,9 +140,11 @@ cl_CC2530_timer3::CaptureCompare(void)
 	  if (capt == true)
 	    {
 	      sfr->write(tabCh[i].RegCMPL, sfr->read(T1CNTL));//fixme
+#ifdef T3INFO
 	      fprintf(stderr,"\nCount: 0x%04x\n", count);
 	      fprintf(stderr,"\nCapture: in %s of value: 0x%04x\n\n", id_string, 
 		      tabCh[i].ValRegCMP);
+#endif
 	      int flag=1<<i;
 	      if ((sfr->read(tabCh[i].RegCTL) & 0x40) != 0)
 		{
@@ -151,16 +161,22 @@ cl_CC2530_timer3::CaptureCompare(void)
 	    {
 	      ////TRACE();
 	      tabCh[i].IOPin = Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].ValRegCMP);
+#ifdef T3INFO
 	      fprintf(stderr, "Old Flagsreg...0x%04x\n", flagsReg);
+#endif
 	      flagsReg = sfr->read(0x8E);
 	      flagsReg = flagsReg | (0x80 << i);
 	      sfr->write(0x8E, flagsReg);
+#ifdef T3INFO
 	      fprintf(stderr, "New Flagsreg...0x%04x\n", flagsReg);
+#endif
 	      cc=1;
+#ifdef T3INFO
 	      fprintf(stderr, "Channel %d in compare mode...\n", i);
 	      fprintf(stderr, "Count: 0x%04x\n", count);
 	      fprintf(stderr, "Compare reg val: 0x%04x\n", tabCh[i].ValRegCMP);
 	      fprintf(stderr, "Channel 0 Compare reg val: 0x%04x\n", tabCh[0].ValRegCMP);
+#endif
 	    }
 	}
     }
@@ -204,8 +220,10 @@ cl_CC2530_timer3::get_next_cc_event()
       valRegCTL = (sfr->read(tabCh[i].RegCTL)) & 0x4;
       if ((valRegCTL) != 0)
 	{
+#ifdef T3INFO
 	  fprintf(stderr, "Channel %d: Compare enabled? %s\n", i, 
 		  (valRegCTL != 0)?"1":"0");
+#endif
 	  if ((mode == 1) || ((mode == 3) && (up_down == 1)))
 	    cmpEventIn = count - tabCh[i].ValRegCMP;
 	  else
@@ -213,10 +231,14 @@ cl_CC2530_timer3::get_next_cc_event()
 	  if (((cmpEventIn > 0) && (cmpEventIn < NextCmpEvent)
 	       || ((NextCmpEvent == -1) && (cmpEventIn != 0))))
 	    NextCmpEvent = cmpEventIn;
+#ifdef T3INFO
 	  fprintf(stderr, "Channel %d: Compare event in %d Timer ticks...\n", i, cmpEventIn);
+#endif
 	}
     }
+#ifdef T3INFO
   fprintf(stderr, "Next compare event in %d Timer ticks...\n", NextCmpEvent);
+#endif
 }
 
 /* End of s51.src/CC2530timer3.cc */

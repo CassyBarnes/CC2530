@@ -5,11 +5,11 @@ struct port {
   char pin[8];
 };
 
-class cl_CC2530_timer: public cl_hw
+class cl_CC2530_sleep_timer: public cl_hw
 {
 protected:
   int count;
-  class cl_memory_cell  *cell_clkconcmd, *cell_txstat, *cell_txctl, *cell_tl, *cell_th;
+  class cl_memory_cell  *cell_clkconcmd, *cell_st0, *cell_st1, *cell_st2, *cell_stcv0, *cell_stcv1, *cell_stcv2, *cell_stload, *cell_stcc;
   int tickcount;
   int PortNum;
   int PinNum;

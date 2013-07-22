@@ -1,0 +1,64 @@
+#ifndef CC2530flashctrlcl
+#define CC2530flashctrlcl
+
+#include "memcl.h"
+#include "uccl.h"
+
+struct Word
+{
+  int NumberOfWrites;
+};
+
+struct flashPage
+{
+  t_addr StartAddr;
+  int NumberOfWrites;
+  bool lockbit;
+  struct Word WordTab[1024];
+};
+
+class cl_CC2530_flash_ctrler: public cl_hw
+{
+ protected:
+
+  class cl_memory_cell *cell_faddrh;
+  class cl_memory_cell *cell_faddrl;
+  class cl_memory_cell *cell_fwdata;
+  class cl_memory_cell *cell_clkconcmd;
+  class cl_memory_cell *cell_fctl;
+  class cl_address_space *sfr;
+  class cl_address_space *xram;
+  class cl_address_space *flash;
+  class cl_address_space *flashbank0;
+  class cl_address_space *flashbank1;
+  class cl_address_space *flashbank2;
+  class cl_address_space *flashbank3;
+  struct flashPage PageTab[128];
+  double freq;
+  double TickCount;
+  bool timerEnabled;
+  bool writing;
+  bool regFull;
+  int reg;
+  int address;
+  int PageNum;
+  int WordNum;
+  int TXNum;
+  t_addr dest;
+  t_mem val;
+
+public:
+
+  cl_CC2530_flash_ctrler(class cl_uc *auc, int aid, char *aid_string);
+  virtual int init(void);
+  virtual double timer(void);
+  virtual void erasePage(int pageNumber);
+  virtual void ChipErase(void);
+  virtual int flashWrite(void);
+  virtual void write(class cl_memory_cell *cell, t_mem *val);
+  virtual int tick(int cycles);
+
+};
+
+#endif
+/* End of s51.src/CC2530flashCtrlercl.h */

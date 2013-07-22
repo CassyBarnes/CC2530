@@ -244,13 +244,18 @@ enum hw_cath {
   HW_WDT	= 0x0040,
   HW_CC2530_RADIO = 0x0080,
   HW_CC2530_USART = 0x0100,
-  HW_CC2530_DMA = 0x0200};
+  HW_CC2530_DMA = 0x0200,
+  HW_CC2530_FLASH_CONTROLLER = 0x0400,
+  HW_MAC_TIMER = 0x0800};
 
 // Events that can happen in peripherals
 enum hw_event {
   EV_OVERFLOW,
   EV_PORT_CHANGED,
-  EV_T2_MODE_CHANGED
+  EV_T2_MODE_CHANGED,
+  EV_T2_EVENT1,
+  EV_T2_EVENT2,
+  EV_NO_ACK
 };
 
 // flags of hw units

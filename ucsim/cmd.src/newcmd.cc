@@ -26,7 +26,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 /*@1@*/
 
 #include "ddconfig.h"
-
+#include <assert.h>
 #include <stdio.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -61,6 +61,13 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "newcmdcl.h"
 #include "cmdutil.h"
 
+#undef DEBUG
+#ifdef DEBUG
+#define TRACE() \
+fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
+#else
+#define TRACE()
+#endif
 
 extern "C" int vasprintf(char **strp, const  char *format, va_list ap);
 extern "C" int vsnprintf(char *str, size_t size,const char *format,va_list ap);
@@ -338,26 +345,31 @@ cl_console::cmd_do_print(FILE *f, char *format, va_list ap)
 {
   int ret;
 #ifdef HAVE_VASPRINTF
+  TRACE();
   char *msg= NULL;
   vasprintf(&msg, format, ap);
   ret= fprintf(f, "%s", msg);
   free(msg);
 #else
 #  ifdef HAVE_VSNPRINTF
+  TRACE();
   char msg[80*25];
   vsnprintf(msg, 80*25, format, ap);
   ret= fprintf(f, "%s", msg);
 #  else
 #    ifdef HAVE_VPRINTF
+  TRACE();
   char msg[80*25];
   vsprintf(msg, format, ap); /* Dangerous */
   ret= fprintf(f, "%s", msg);
 #    else
 #      ifdef HAVE_DOPRNT
+  TRACE();
   /* ??? */
   /*strcpy(msg, "Unimplemented printf has called.\n");*/
 #      else
   /*strcpy(msg, "printf can not be implemented, upgrade your libc.\n");*/
+  TRACE();
 #      endif
 #    endif
 #  endif

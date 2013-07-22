@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <assert.h>
 #include "i_string.h"
 
 // prj
@@ -78,6 +79,7 @@ cl_memory::cl_memory(char *id, t_addr asize, int awidth, t_addr aoffset):
   width= awidth;
   start_address= 0;
   uc= 0;
+  //fprintf(stderr, "Initializing memory %s size 0x%02x offset 0x%02x width 0x%02x\n", this->name, size, xram_offset, width);
 }
 
 cl_memory::cl_memory(char *id, t_addr asize, int awidth):
@@ -90,6 +92,7 @@ cl_memory::cl_memory(char *id, t_addr asize, int awidth):
   width= awidth;
   start_address= 0;
   uc= 0;
+  //fprintf(stderr, "Initializing memory %s size 0x%02x offset 0x%02x width 0x%02x\n", this->name, size, xram_offset, width);
 }
 
 cl_memory::~cl_memory(void)
@@ -193,6 +196,8 @@ cl_memory::err_non_decoded(t_addr addr)
 t_addr
 cl_memory::dump(t_addr start, t_addr stop, int bpl, class cl_console *con)
 {
+  //fprintf(stderr,"About to dump %s, from @ 0x%04x to 0x%04x\n",
+  //	    this->name, start, stop); 
   int i;
   t_addr lva= lowest_valid_address();
   t_addr hva= highest_valid_address();
@@ -210,7 +215,9 @@ cl_memory::dump(t_addr start, t_addr stop, int bpl, class cl_console *con)
 	     (start+i <= stop);
 	   i++)
 	{
-	  con->dd_printf(data_format, get(start+i)); con->dd_printf(" ");
+	  //fprintf(stderr, "Dump 0x%02x\n", get(start+i));
+	  //	  con->dd_printf(data_format, get(start+i)); con->dd_printf(" ");
+	  con->dd_printf(data_format, read(start+i)); con->dd_printf(" ");
 	}
       while (i < bpl)
 	{
@@ -223,7 +230,7 @@ cl_memory::dump(t_addr start, t_addr stop, int bpl, class cl_console *con)
 	    }
 	  i++;
 	}
-      for (i= 0; (i < bpl) &&
+      /*      for (i= 0; (i < bpl) &&
 	     (start+i < hva) &&
 	     (start+i <= stop);
 	   i++)
@@ -236,11 +243,12 @@ cl_memory::dump(t_addr start, t_addr stop, int bpl, class cl_console *con)
 	    con->dd_printf("%c", isprint(255&(c>>16))?(255&(c>>16)):'.');
 	  if (width > 24)
 	    con->dd_printf("%c", isprint(255&(c>>24))?(255&(c>>24)):'.');
-	}
+	    }*/
       con->dd_printf("\n");
       dump_finished= start+i;
       start+= bpl;
     }
+
   return(dump_finished);
 }
 
@@ -316,6 +324,7 @@ cl_memory_operator::cl_memory_operator(class cl_memory_cell *acell,
 				       t_mem *data_place, t_mem the_mask):
   cl_base()
 {
+
   cell= acell;
   data= data_place;
   mask= the_mask;
@@ -974,6 +983,7 @@ cl_address_space::write(t_addr addr, t_mem val)
   if (idx >= size ||
       addr < start_address)
     {
+      assert(false);
       fprintf(stderr, "idx: 0x%02x\n", idx);
       TRACE();
       err_inv_addr(addr);
@@ -1275,7 +1285,7 @@ cl_address_space::register_hw(t_addr addr, class cl_hw *hw,
     return(0);
   class cl_memory_cell *cell= cells[idx];
   cell->add_hw(hw, ith, addr);
-  //printf("adding hw %s to cell 0x%x(%d) of %s\n", hw->id_string, addr, idx, get_name("as"));
+  /*fprintf(stderr, "adding hw %s to cell 0x%x(%d) of %s\n", hw->id_string, addr, idx, get_name("as"));*/
   if (announce)
     ;//uc->sim->/*app->*/mem_cell_changed(this, addr);//FIXME
   return(cell);

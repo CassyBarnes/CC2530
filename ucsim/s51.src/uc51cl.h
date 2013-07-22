@@ -50,6 +50,7 @@
 #include "CC2530usartcl.h" 
 #include "CC2530DMAcl.h" 
 #include "interruptcl.h"
+#include "CC2530flashCtrlercl.h"
 
 #define DEBUG
 
@@ -97,6 +98,7 @@ public:
   cl_CC2530_usart  *CC2530usart0;
   cl_CC2530_usart  *CC2530usart1;
   cl_CC2530_dma  *CC2530DMA;
+  cl_CC2530_flash_ctrler  *CC2530flashctrler;
 
 public:
   // Help to detect external it requests (falling edge)

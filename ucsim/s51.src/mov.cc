@@ -506,7 +506,10 @@ cl_51core::inst_movx_Sdptr_a(uchar code)
     sfr->write(dp, acc->read());
     }
   else
-    xram->write(dp, acc->read());
+    {
+      xram->write(dp, acc->read());
+      fprintf(stderr, "MOVX: Writing %d in xram at @ %d\n", acc->read(), dp);
+    }
 #else
   xram->write(dp, acc->read());
 #endif

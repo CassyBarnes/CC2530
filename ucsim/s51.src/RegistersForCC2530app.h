@@ -229,4 +229,14 @@
 #define bmStop     0x02
 #define bmStart    0x01
 
+/* Bit masks of flag bits in PSW (0xd0)*/
+
+#define bmCY	0x80 /* carry */
+#define bmAC	0x40 /* acarry */
+#define bmF0	0x20 /* flag 0 */
+#define bmRS1	0x10 /* register select 1 */
+#define bmRS0	0x08 /* register select 0 */
+#define bmOV	0x04 /* arithmetic overflow */
+#define bmP	0x01 /* parity, set by hardware */
+
 #endif

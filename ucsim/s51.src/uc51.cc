@@ -165,6 +165,8 @@ cl_51core::mk_hw_elements(void)
   hws->add(CC2530usart1);
   CC2530DMA = new cl_CC2530_dma(this, 1, "CC2530DMA");
   hws->add(CC2530DMA);
+  CC2530flashctrler = new cl_CC2530_flash_ctrler(this, 1, "CC2530flash_controller");
+  hws->add(CC2530flashctrler);
   //h->init();//Calypso
   hws->add(h= new cl_serial(this));
   h->init();
@@ -247,13 +249,13 @@ cl_51core::make_memories(void)
   flashbank0= as= new cl_address_space(MEM_FLASHBANK0_ID, 0, 0x8000, 8, 0x8000);
   as->init();
   address_spaces->add(as);
-  flashbank1= as= new cl_address_space(MEM_FLASHBANK1_ID, 0, 0x8000, 0x8000);
+  flashbank1= as= new cl_address_space(MEM_FLASHBANK1_ID, 0, 0x8000, 8, 0x8000);
   as->init();
   address_spaces->add(as);
-  flashbank2= as= new cl_address_space(MEM_FLASHBANK2_ID, 0, 0x8000, 0x8000);
+  flashbank2= as= new cl_address_space(MEM_FLASHBANK2_ID, 0, 0x8000, 8, 0x8000);
   as->init();
   address_spaces->add(as);
-  flashbank3= as= new cl_address_space(MEM_FLASHBANK3_ID, 0, 0x8000, 0x8000);
+  flashbank3= as= new cl_address_space(MEM_FLASHBANK3_ID, 0, 0x8000, 8, 0x8000);
   as->init();
   address_spaces->add(as);
   sram= as= new cl_address_space(MEM_SRAM_ID, 0x00, 0x2000, 8, 0);
@@ -508,7 +510,8 @@ cl_51core::print_regs(class cl_console *con)
 
   //con->dd_printf("IRAM START:%06x %02x %c\n",
   //	      iram->get(start), data, isprint(data)?data:'.');//Commented by Calypso (no need for it)
- con->dd_printf("  R0= 0x%02x  R1= 0x%02x  R2= 0x%02x  R3= 0x%02x\n  R4= 0x%02x  R5= 0x%02x  R6= 0x%02x  R7= 0x%02x\n", iram->get(start), iram->get(start+1), iram->get(start+2), iram->get(start+3),iram->get(start+4), iram->get(start+5), iram->get(start+6), iram->get(start+7));
+  con->dd_printf("\n  ******** Register State Info: ********\n");
+  con->dd_printf("  R0= 0x%02x  R1= 0x%02x  R2= 0x%02x  R3= 0x%02x\n  R4= 0x%02x  R5= 0x%02x  R6= 0x%02x  R7= 0x%02x\n", iram->get(start), iram->get(start+1), iram->get(start+2), iram->get(start+3),iram->get(start+4), iram->get(start+5), iram->get(start+6), iram->get(start+7));
 
 
  con->dd_printf("  ACC= 0x%02x %3d %c  B= 0x%02x", sfr->get(ACC), sfr->get(ACC),
@@ -516,7 +519,7 @@ cl_51core::print_regs(class cl_console *con)
  address=sfr->get(DPH)*256+sfr->get(DPL);
 
  data= xram->get(address);
- con->dd_printf("  DPTR= 0x%02x%02x @DPTR= 0x%02x %3d %c\n", sfr->get(DPH),
+ con->dd_printf("\n  DPTR= 0x%02x%02x @DPTR= 0x%02x %3d %c\n", sfr->get(DPH),
 		sfr->get(DPL), data, data, isprint(data)?data:'.');
   
 #ifdef CC2530
@@ -530,7 +533,7 @@ cl_51core::print_regs(class cl_console *con)
   con->dd_printf("  PSW= 0x%02x CY=%c AC=%c OV=%c P=%c\n", data,
 	      (data&bmCY)?'1':'0', (data&bmAC)?'1':'0',
 	      (data&bmOV)?'1':'0', (data&bmP)?'1':'0');
-
+  con->dd_printf("\n  Next instruction to be executed: \n");
   print_disass(PC, con);
 }
 

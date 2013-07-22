@@ -3,9 +3,13 @@
 #include "uc51cl.h"
 #include "regs51.h"
 #include "types51.h"
-//#include <algorithm>    // std::min
+//#include <algorithm>    // std::min//Bug while compiling
 
+#undef DEBUG
+
+#ifdef DMAINFO
 #define DEBUG
+#endif
 #ifdef DEBUG
 #define TRACE() \
 fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
@@ -92,16 +96,21 @@ int
 cl_CC2530_dma::tick(int cycles)
 {
   TRACE(); 
+#ifdef DMAINFO
   fprintf(stderr, "\n************* %s *************\n", id_string);
   fprintf(stderr, "tick! \n");
+#endif
   flagsReg = sfr->read(0x8E);
+#ifdef DMAINFO
   fprintf(stderr, "Event flag: 0x%04x\n", flagsReg);
-  for (int i = 1; i<5; i++)
-    fprintf(stderr, "Channel %d max len  0x%04x\n", i, tabDMACh[i].LEN);
+#endif
+  // for (int i = 1; i<5; i++)
+  // fprintf(stderr, "Channel %d max len  0x%04x\n", i, tabDMACh[i].LEN);
   if (flagsReg != 0)
     {
-
+#ifdef DMAINFO
       fprintf(stderr, "Flagsreg: 0x%04x \n", flagsReg);
+#endif
 
       tabDMACh[0].ConfigAddress = (sfr->read(DMA0CFGH)<<8) + sfr->read(DMA0CFGL); 
       for (int i = 1; i<5; i++)
@@ -128,15 +137,19 @@ cl_CC2530_dma::transferTest(void)
       tabDMACh[i].armed = ((sfr->read(DMAARM) & (1<<i)) != 0);
       if (tabDMACh[i].armed)
 	{
+#ifdef DMAINFO
   fprintf(stderr, "Trigger: 0x%04x Other: %s 0x%04x 0x%04x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x  \n",tabDMACh[i].TriggerEvent, tabDMACh[i].armed?"1":"0",tabDMACh[i].source, tabDMACh[i].destination, tabDMACh[i].VLEN, tabDMACh[i].LEN, tabDMACh[i].Byte_Word_tx, tabDMACh[i].TxMode, tabDMACh[i].SRCincrement,  tabDMACh[i].DESTincrement);
+#endif
 	  TRACE();
 	  LoadConfig(i, CFGaddr);
 	  tabDMACh[i].TriggerEvent = ((xram->read(CFGaddr + 6)) & 0x1F);
+#ifdef DMAINFO
 	  fprintf(stderr, 
 		  "Flagsreg: 0x%04x Trigger for channel %d: 0x%04x from @ 0x%04x\n", 
 		  flagsReg, i, 
 		  tabDMACh[i].TriggerEvent,
 		  CFGaddr + 6);
+#endif
 	  if (((1<<tabDMACh[i].TriggerEvent) & flagsReg) != 0)
 	    {
 	      TRACE();
@@ -151,13 +164,17 @@ cl_CC2530_dma::transferTest(int i)
 {
   TRACE();
   t_addr CFGaddr = tabDMACh[i].ConfigAddress;
+#ifdef DMAINFO
   fprintf(stderr, "Trigger: 0x%04x Other: %s 0x%04x 0x%04x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x  \n",tabDMACh[i].TriggerEvent, tabDMACh[i].armed?"1":"0",tabDMACh[i].source, tabDMACh[i].destination, tabDMACh[i].VLEN, tabDMACh[i].LEN, tabDMACh[i].Byte_Word_tx, tabDMACh[i].TxMode, tabDMACh[i].SRCincrement,  tabDMACh[i].DESTincrement);
+#endif
   if (tabDMACh[i].armed)
     {
       tabDMACh[i].TriggerEvent = ((xram->read(CFGaddr + 6)) & 0x1F);
       LoadConfig(i, CFGaddr);
+#ifdef DMAINFO
       fprintf(stderr, "Flagsreg: 0x%04x Trigger: 0x%04x \n", flagsReg, 
 	      tabDMACh[i].TriggerEvent);
+#endif
       if (Req || (((1<<tabDMACh[i].TriggerEvent) & flagsReg) != 0))
 	{
 	  transfer(i);
@@ -281,13 +298,17 @@ cl_CC2530_dma::LoadConfig(int i, t_addr CFGaddr)
 	case 3: tabDMACh[i].DESTinc = -1; break;
 	}
  
+#ifdef DMAINFO
       fprintf(stderr, "Transfering : 0x%04x %s, Maximum length is: 0x%04x \n", 
 	      tabDMACh[i].TransferCount, 
 	      (tabDMACh[i].Byte_Word_tx == 0)?"Bytes":"Words", 
 	      tabDMACh[i].LEN);
+#endif
       tabDMACh[i].single =(tabDMACh[i].TxMode & 1) == 0;
       tabDMACh[i].repeated =(tabDMACh[i].TxMode & 2) == 2;
+#ifdef DMAINFO
       fprintf(stderr, "Repeated : %s\n",(tabDMACh[i].repeated)?"yes":"no");
+#endif
       tabDMACh[i].init = true;
     }
 }
@@ -324,3 +345,5 @@ cl_CC2530_dma::write(class cl_memory_cell *cell, t_mem *val)
     {
     }
 }
+
+#undef DEBUG

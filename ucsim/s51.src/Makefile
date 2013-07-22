@@ -52,7 +52,8 @@ OBJECTS_SHARED	= glob.o sim51.o \
 		  timer0.o timer1.o timer2.o serial.o port.o interrupt.o \
 		  wdt.o pca.o CC2530timer.o CC2530timer1.o CC2530timer2.o \
 		  CC2530timer3.o CC2530timer4.o uc51.o uc52.o uc51r.o uc89c51r.o \
-		  CC2530usart.o CC2530DMA.o uc251.o uc390.o uc390hw.o 
+		  CC2530usart.o CC2530DMA.o uc251.o uc390.o uc390hw.o \
+		  CC2530sleepTimer.o CC2530WDT.o CC2530flashCtrler.o
 OBJECTS_EXE	= s51.o 
 OBJECTS		= $(OBJECTS_SHARED) $(OBJECTS_EXE)
 

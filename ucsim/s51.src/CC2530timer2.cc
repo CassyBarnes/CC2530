@@ -12,14 +12,19 @@ fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
 #define TRACE()
 #endif
 
+#define T2INFO
+
 #ifndef CC2530xtal
 #define CC2530xtal 32000000
 #endif
 
 cl_CC2530_timer2::cl_CC2530_timer2(class cl_uc *auc, int aid, char *aid_string):
-  cl_hw(auc, HW_TIMER, aid, aid_string)
+  cl_hw(auc, HW_MAC_TIMER, aid, aid_string)
 {
+  make_partner(HW_CC2530_USART, 0);
+  make_partner(HW_CC2530_RADIO, 0);
   sfr= uc->address_space(MEM_SFR_ID);
+  xram= uc->address_space(MEM_XRAM_ID);
   init();
 }
 
@@ -56,6 +61,7 @@ cl_CC2530_timer2::init(void)
   register_cell(sfr, T2MOVF1, &cell_t2movf1, wtd_restore_write);
   register_cell(sfr, T2MOVF2, &cell_t2movf2, wtd_restore_write);
   register_cell(sfr, CLKCONCMD, &cell_clkconcmd, wtd_restore_write);
+  register_cell(xram, CSPT, &cell_cspt, wtd_restore_write);
   return(0);
 }
 
@@ -65,20 +71,21 @@ cl_CC2530_timer2::tick(int cycles)
 
   TimerTicks += cycles;
   systemTicks += cycles;
+
+#ifdef T2INFO
   TRACE();
   fprintf(stderr, "************* %s *************\n", id_string);
   fprintf(stderr, "tick! %g ticks... %d cycles. Time elapsed: %g s\n", TimerTicks, cycles, get_rtime());
   fprintf(stderr, "Mode: %s\n", modes[mode]);
-  //if (run == 1)
-  
-  TRACE();
+#endif
+
   switch (mode)
     {
     case 0: do_UpMode(cycles); break;
     case 1: do_DeltaMode(cycles); break;
     }
   
-  t2movfsel = ((cell_t2msel->get()) >> 4) & 0x07;
+  /*  t2movfsel = ((cell_t2msel->get()) >> 4) & 0x07;
   t2msel = cell_t2msel->get() & 0x07;
   switch (t2movfsel)
     {
@@ -137,7 +144,7 @@ cl_CC2530_timer2::tick(int cycles)
     default:
       fprintf(stderr, "ERROR in T2MSEL register configuration.\n");
       break;
-    }
+      }*/
   fprintf(stderr, "Timer MAC count: 0x%02x.\n", count);
 }
 
@@ -160,25 +167,14 @@ cl_CC2530_timer2::write(class cl_memory_cell *cell, t_mem *val)
 {
   if (cell == cell_t2ctrl)
     {
-      if (*val & 0x01 == 0)
+      if ((*val & 0x01) == 0)
 	run = 0;
       else
 	run = 1;
     }
-  else if (cell == cell_clkconcmd)
+  if (cell == cell_clkconcmd)
     {
-      switch((*val & bmTickSpd) >> 3)
-	{ 
-	case 0: tickspd= 1; break;
-	case 1: tickspd= 2; break;
-	case 2: tickspd= 4; break;
-	case 3: tickspd= 8; break;
-	case 4: tickspd= 16; break;
-	case 5: tickspd= 32; break;
-	case 6: tickspd= 64; break;
-	case 7: tickspd= 128; break;
-	default: tickspd=1; break;
-	}
+      tickspd= 1<<((*val & bmTickSpd) >> 3);
       MemElapsedTime = get_rtime();
       MemSystemTicks = systemTicks;
       systemTicks=0;
@@ -186,147 +182,247 @@ cl_CC2530_timer2::write(class cl_memory_cell *cell, t_mem *val)
       fprintf(stderr,"Modification of CLKCONCMD.\n");
 
     }
-
-  else if ((cell == cell_t2m0) || (cell== cell_t2m1))
+  if (cell == cell_t2msel)
     {
+      t2movfsel = (*val >> 4) & 0x07;
+      t2msel = *val & 0x07;
+    }
+
+  if (cell == cell_t2m0)
+    {
+      TRACE();
+      fprintf(stderr,"T2MSEl is %d.\n", t2msel);
       switch (t2msel)
 	{
 	case 0:
-	  if ((run == 0))
-	    {
-	      count = *val;
-	      if (cell == cell_t2m1)//t2m1 written after t2m0
-		count = *val*256 + cell_t2m0->get();
-	    }
-	  else //run =1
-	    {
-	      count= *val;
-	      if (cell == cell_t2m1)
-		{
-		  count= *val*256 + cell_t2m0->get();
-		  mode = 1;
-		}
-	    }
+	  count = *val;
+	  fprintf(stderr,"MAC count is %d.\n", count);
 	  break;
 	case 1:
 	  t2_cap = *val;
-	  if (cell == cell_t2m1)
-	    t2_cap = *val*256 + cell_t2m0->get();
 	  break;
 	case 2:
 	  t2_per = *val;
-	  if (cell == cell_t2m1)
-	    t2_per = *val*256 + cell_t2m0->get();
 	  break;
 	case 3:
 	  t2_cmp1 = *val;
-	  if (cell == cell_t2m1)
-	    t2_cmp1 = *val*256 + cell_t2m0->get();
-	  TRACE();
 	  fprintf(stderr, "CMP1 value: 0x%04x .\n", t2_cmp1);
 	  break;
 	case 4:
 	  t2_cmp2 = *val;
-	  if (cell == cell_t2m1)
-	    t2_cmp2 = *val*256 + cell_t2m0->get();
 	  break;
 	default:
 	  fprintf(stderr, "ERROR in T2MSEL register configuration.\n");
 	  break;
 	}
+    }
 
+  if (cell == cell_t2m1)
+    {
+      TRACE();
+      switch (t2msel)
+	{
+	case 0:
+	  if (run == 0)
+	    {
+	      count = (*val<< 8) + cell_t2m0->get();
+	      fprintf(stderr,"MAC count is %02x.\n", count);
+	    }
+	  else //run =1
+	    {
+	      count= (*val<< 8) + cell_t2m0->get();
+	      fprintf(stderr,"MAC count is %d.\n", count);
+	      mode = 1;
+	    }
+	  break;
+	case 1:
+	  t2_cap = (*val<< 8) + cell_t2m0->get();
+	  break;
+	case 2:
+	  t2_per = (*val<< 8) + cell_t2m0->get();
+	  break;
+	case 3:
+	  t2_cmp1 = (*val<< 8) + cell_t2m0->get();
+	  fprintf(stderr, "CMP1 value: 0x%04x .\n", t2_cmp1);
+	  break;
+	case 4:
+	  t2_cmp2 = (*val<< 8) + cell_t2m0->get();
+	  break;
+	default:
+	  fprintf(stderr, "ERROR in T2MSEL register configuration.\n");
+	  break;
+	}
     }
  
   if (cell == cell_t2movf0) 
     {
-      if (t2movfsel == 0)
-	OVF0 = *val;
-      else if (t2movfsel == 0x03)
-	OVFcmp1_0 = *val;
-      else if (t2movfsel == 0x04)
-	OVFcmp2_0 = *val;
+      switch(t2movfsel)
+	{
+	case 0: OVF0 = *val; break;
+	case 1: OVFcap0 = *val; break;
+	case 2: OVFper0 = *val; break;
+	case 3: OVFcmp1_0 = *val; break;
+	case 4: OVFcmp2_0 = *val; break;
+	default: fprintf(stderr, "ERROR in T2MOVFSEL reg configuration.\n"); break;
+	}
     }
+
   if (cell == cell_t2movf1) 
     {
-      if (t2movfsel == 0)
-	OVF1 = *val;
-      else if (t2movfsel == 0x03)
-	OVFcmp1_1 = *val;
-      else if (t2movfsel == 0x04)
-	OVFcmp2_1 = *val;
+      switch(t2movfsel)
+	{
+	case 0: OVF1 = *val; break;
+	case 1: OVFcap1 = *val; break;
+	case 2: OVFper1 = *val; break;
+	case 3: OVFcmp1_1 = *val; break;
+	case 4: OVFcmp2_1 = *val; break;
+	default: fprintf(stderr, "ERROR in T2MOVFSEL reg configuration.\n"); break;
+	}
     }
+
   if (cell == cell_t2movf2) 
     {
-      if (t2movfsel == 0)
-	OVF2 = *val;
-      else if (t2movfsel == 0x03)
-	OVFcmp1_2 = *val;
-      else if (t2movfsel == 0x04)
-	OVFcmp2_2 = *val;
+      switch(t2movfsel)
+	{
+	case 0: OVF2 = *val; break;
+	case 1: OVFcap2 = *val; break;
+	case 2: OVFper2 = *val; break;
+	case 3: OVFcmp1_2 = *val; break;
+	case 4: OVFcmp2_2 = *val; break;
+	default: fprintf(stderr, "ERROR in T2MOVFSEL reg configuration.\n"); break;
+	}
     }
 }
 
-/*t_mem
+t_mem
 cl_CC2530_timer2::read(class cl_memory_cell *cell)
 {
   t_mem d = 0;
-  if ((cell == cell_t2m0) || (cell== cell_t2m1))
+  if (cell == cell_t2m0)
     {
-      switch ((cell_t2msel->get()) & 0x07)
+      switch (t2msel)
 	{
 	case 0: 
-	  TRACE();
-	  if (cell == cell_t2m0)
-	    {
-	      d = count & 0xFF;
-	      fprintf(stderr, "reading t2m0, value should be %d.\n", count & 0xFF);
-	      cell_t2m0->set(count & 0xFF);
-	      assert(false);
-	      //return(1);
-	      //return(count & 0xFF);
-	    }
-	  else
-	    d = count>>8;
+	  d = count & 0xFF;
+	  fprintf(stderr, "reading t2m0, value should be %d.\n", count & 0xFF);
+	  return(d);
+	case 1:
+	  d = t2_cap & 0xFF;
+	  return(d);
+	  break;
+	case 2: 
+	  d = t2_per & 0xFF;
+	  return(d);
+	  break;
+	case 3:
+	  fprintf(stderr, "reading t2m0, cmp1 value should be %d.\n", t2_cmp1 & 0xFF);
+	  d = t2_cmp1 & 0xFF;
+	  return(d);
+	  break;
+	case 4:  
+	  d = t2_cmp2 & 0xFF;
+	  return(d);
+	  break;
+	default: break;
+	}	
+    }
+
+  if (cell== cell_t2m1)
+    {
+      switch (t2msel)
+	{
+	case 0: 
+	  d = (count>>8) & 0xFF;
 	  return(d);
 	  break;
 	case 1:
-	  TRACE();
-	  //t2_cap = count;
-	  if (cell == cell_t2m0)
-	    d = t2_cap & 0xFF;
-	  else
-	    d = t2_cap>>8;
+	  d = (t2_cap>>8) & 0xFF;
 	  return(d);
 	  break;
-	case 2:  break;
-	case 3:  break;
-	case 4:  break;
+	case 2:  
+	  d = (t2_per>>8) & 0xFF;
+	  return(d);
+	  break;
+	case 3: 
+	  d = (t2_cmp1>>8) & 0xFF;
+	  return(d);
+	  break;
+	case 4:  
+	  d = (t2_cmp2>>8) & 0xFF;
+	  return(d);
+	  break;
 	default: break;
 	}
     }
-  int t2movfsel = ((cell_t2msel->get()) >> 4) & 0x07;
+
   if (cell == cell_t2movf0) 
     {
-      if (t2movfsel == 0)
-	return(OVF0);
-      if (t2movfsel == 1)
-	return(OVFcap0);
+      switch (t2movfsel)
+	{
+	case 0: 
+	  return(OVF0);
+	  break;
+	case 1:
+	  return(OVFcap0);
+	  break;
+	case 2:  
+	  return(OVFper0);
+	  break;
+	case 3: 
+	  return(OVFcmp1_0);
+	  break;
+	case 4:  
+	  return(OVFcmp2_0);
+	  break;
+	default: break;
+	}
     }
   if (cell == cell_t2movf1) 
     {
-      if (t2movfsel == 0)
-	return(OVF1);
-      if (t2movfsel == 1)
-	return(OVFcap1);
+      switch (t2movfsel)
+	{
+	case 0: 
+	  return(OVF1);
+	  break;
+	case 1:
+	  return(OVFcap1);
+	  break;
+	case 2:  
+	  return(OVFper1);
+	  break;
+	case 3: 
+	  return(OVFcmp1_1);
+	  break;
+	case 4:  
+	  return(OVFcmp2_1);
+	  break;
+	default: break;
+	}
     }
+
   if (cell == cell_t2movf2) 
     {
-      if (t2movfsel == 0)
-	return(OVF2);
-      if (t2movfsel == 1)
-	return(OVFcap2);
+      switch (t2movfsel)
+	{
+	case 0: 
+	  return(OVF2);
+	  break;
+	case 1:
+	  return(OVFcap2);
+	  break;
+	case 2:  
+	  return(OVFper2);
+	  break;
+	case 3: 
+	  return(OVFcmp1_2);
+	  break;
+	case 4:  
+	  return(OVFcmp2_2);
+	  break;
+	default: break;
+	}
     }
-}*/
+}
 
 int
 cl_CC2530_timer2::do_UpMode(int cycles)
@@ -368,6 +464,9 @@ cl_CC2530_timer2::overflow(void)
 {
   inform_partners(EV_OVERFLOW, 0);
   fprintf(stderr,"%s overflow !\n", id_string);
+  int cspt = cell_cspt->get();
+  if (cspt != 0xFF)
+    cell_cspt->set(cspt - 1);
   print_info();
   OVF0++;
   if (OVF0 == 0)

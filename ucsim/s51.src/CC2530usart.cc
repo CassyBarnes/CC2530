@@ -5,7 +5,9 @@
 #include "regs51.h"
 #include "types51.h"
 
+#ifdef USARTINFO
 #define DEBUG
+#endif
 #ifdef DEBUG
 #define TRACE() \
 fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
@@ -111,9 +113,9 @@ cl_CC2530_usart::tick(int cycles)
       BaudRate = BaudFactor * CC2530xtal;
 
       mode = cell_uXcsr->get() & bmMode;//=0x80 if uart mode, 0 if SPI mode.
-      
+#ifdef USARTINFO
       fprintf(stderr, "Tickcount: %d\tGoal: %g\n", TickCountForBaud, 1.0/BaudFactor);
-      
+#endif
       if (!((mode == 0) && (slave == 1)))
 	{
 	  if (TickCountForBaud >= (1/BaudFactor))
@@ -188,8 +190,10 @@ cl_CC2530_usart::Shift_in(t_mem& Rxreg, bool& IPin)
     return(0);
   bitRxCnt++;//counts number of bits received 
   IPin=(testTab[bitRxCnt - 1] != 0);
+#ifdef USARTINFO
   fprintf(stderr, "RX bits count: %d\n", bitRxCnt);
   fprintf(stderr, "IPIN: %s\n", IPin?"1":"0");
+#endif
   if ((bitRxCnt == 10) && (BitNumber == 9))//Parity bit
     RxParity = IPin;
   else if ((bitRxCnt >= 2)&&(bitRxCnt <= 9))//Data before parity and stop bits
@@ -212,7 +216,9 @@ cl_CC2530_usart::Shift_in(t_mem& Rxreg, bool& IPin)
 	      Rxreg += 1;//1 goes to rx buffer (right)
 	      cell_uXdbuf->set(Rxreg);
 	    }
+#ifdef USARTINFO
 	  fprintf(stderr, "RxReg: 0x%02x\n", Rxreg);
+#endif
 	  Rxreg &= 0xFF;
 	}
     }
@@ -226,17 +232,25 @@ cl_CC2530_usart::Shift_in(t_mem& Rxreg, bool& IPin)
 	      if (RxParity != parity_check(Rxreg))
 		{
 		  cell_uXcsr->set_bit1(bmErr);//Parity error
+#ifdef USARTINFO
 		  fprintf(stderr, "Parity Error!\n", Rxreg);
+#endif
 		}
 	      else
+		{
+#ifdef USARTINFO
 		fprintf(stderr, "Parity OK!\n", Rxreg);
+#endif
+		}
 	    }
 	  if ((bitRxCnt >= 11) && (bitRxCnt < (11 + StopBits)))
 	    {
 	      if (IPin != stopBitLevel)
 		{
 		  cell_uXcsr->set_bit1(bmFe);//Framing error
+#ifdef USARTINFO
 		  fprintf(stderr, "Framing Error!\n", Rxreg);
+#endif
 		}
 	    }
 	}
@@ -265,8 +279,10 @@ void
 cl_CC2530_usart::Shift_out(t_mem& Txreg, bool& OPin)
 {
   bitTxCnt++;
+#ifdef USARTINFO
   fprintf(stderr, "TX bits count: %d\n", bitTxCnt);
   fprintf(stderr, "TxReg: %d\n", Txreg);
+#endif
   if (bitTxCnt <= 1)
     OPin = startBitLevel;
   else if ((bitTxCnt > 1) && (bitTxCnt < 10))
@@ -282,7 +298,9 @@ cl_CC2530_usart::Shift_out(t_mem& Txreg, bool& OPin)
       else //MSB first 
 	{
 	  TRACE();
+#ifdef USARTINFO
 	  fprintf(stderr, "TxReg's MSB: %d\n", (Txreg & 0x80)>>7);
+#endif
 	  OPin = ((Txreg & 0x80) != 0);
 	  Txreg<<=1;
 	  Txreg &= 0xFF;
@@ -294,14 +312,18 @@ cl_CC2530_usart::Shift_out(t_mem& Txreg, bool& OPin)
       if ((BitNumber == 9) && (bitTxCnt == 10))
 	{
 	  TRACE();
+#ifdef USARTINFO
 	  fprintf(stderr, "ParityTx!\n");
+#endif
 	  OPin = TxParity;
 	}
       else 
 	{
 	  TRACE();
 	  OPin = stopBitLevel;
+#ifdef USARTINFO
 	  fprintf(stderr, "STOPTx! StopBits:%d\n", StopBits);
+#endif
 	}
       if (bitTxCnt >= (BitNumber + StopBits + 1))
 	{
@@ -327,24 +349,32 @@ cl_CC2530_usart::Shift_out(t_mem& Txreg, bool& OPin)
 	    }
 	}
     }
+#ifdef USARTINFO
   fprintf(stderr, "TXpin: %s\n", OPin?"1":"0");
+#endif
 }
 
 bool
 cl_CC2530_usart::parity_check(t_mem byte)
 {
    t_mem check = byte & 0x01;//Isolate LSB
+#ifdef USARTINFO
    fprintf(stderr, "\n\nParity CHECK !!!\n");
    fprintf(stderr, "BYTEtoCheck: 0x%02x\tFirst Check: %d\n", byte, check);
+#endif
   for (int i =0; i<7; i++)
     {
       byte >>= 1;
       check ^= (byte & 0x01);
+#ifdef USARTINFO
       fprintf(stderr, "Itération: %d\tByte: 0x%02x\tCheck: %d\n", i, byte, check);
+#endif
     }
   if ((cell_uXucr->get() & bmD9) == 0)//Odd parity
     {
+#ifdef USARTINFO
       fprintf(stderr, "ODD Parity !!!\n\n");
+#endif
       if (check == 0)
 	return(true);
       else
@@ -352,7 +382,9 @@ cl_CC2530_usart::parity_check(t_mem byte)
     }
   else//even parity
     {
+#ifdef USARTINFO
       fprintf(stderr, "EVEN Parity !!!\n\n");
+#endif
       if (check == 0)
 	return(false);
       else
@@ -364,15 +396,15 @@ cl_CC2530_usart::parity_check(t_mem byte)
 void 
 cl_CC2530_usart::write(class cl_memory_cell *cell, t_mem *val)
 {
-  TRACE();
+  //TRACE();
   if (cell == cell_uXdbuf)
     {
-      TRACE();
+      // TRACE();
       if (TX == 1)//already tx
 	queue = 1;
       else
 	{
-	  TRACE();
+	  //  TRACE();
 	  TX = 1;
 	  regForTx = *val;	
 	  cell_uXcsr->set_bit1(bmActive);//active
@@ -380,7 +412,9 @@ cl_CC2530_usart::write(class cl_memory_cell *cell, t_mem *val)
 	  if (BitNumber == 9)//Parity enabled
 	    {
 	    TxParity = parity_check(regForTx);
+#ifdef USARTINFO
 	    fprintf(stderr, "Parity to TX: %s\n\n", TxParity?"1":"0");
+#endif
 	    }
 	}
     }

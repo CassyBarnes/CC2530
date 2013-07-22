@@ -4,6 +4,11 @@
 #include "regs51.h"
 #include "types51.h"
 
+#define bmINT 0x03
+#define bmMODE 0x0C
+#define bmWDTIE 0x20
+#define bmWDTIF 0x20
+
 cl_CC2530_WDT::cl_CC2530_WDT(class cl_uc *auc, int aid, char *aid_string):
   cl_hw(auc, HW_TIMER, aid, aid_string)
 {
@@ -19,6 +24,7 @@ cl_CC2530_WDT::init(void)
 {
  register_cell(sfr, WDCTL, &cell_wdctl, wtd_restore_write);
  register_cell(sfr, CLKCONCMD, &cell_clkconcmd, wtd_restore_write);
+ register_cell(sfr, IRCON2, &cell_ircon2, wtd_restore_write);
 }
 
 double
@@ -151,6 +157,12 @@ cl_CC2530_WDT::do_TimerMode(int cycles)//Mode 3: Timer counts from 0 to FFFF
 	}
     }
   return(0);
+}
+
+int
+cl_CC2530_WDT::overflow(void)
+{
+
 }
 
 int

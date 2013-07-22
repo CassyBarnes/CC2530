@@ -4,6 +4,10 @@
 #include "regs51.h"
 #include "types51.h"
 
+#define bmLDRDY 0x01
+#define bmSTIE 0x20
+#define bmSTIF 0x80
+
 cl_CC2530_sleep_timer::cl_CC2530_sleep_timer(class cl_uc *auc, int aid, char *aid_string):cl_hw(auc, HW_TIMER, aid, aid_string)
 {
   sfr= uc->address_space(MEM_SFR_ID);
@@ -22,6 +26,8 @@ cl_CC2530_sleep_timer::init(void)
   register_cell(sfr, STCV0, &cell_stcv0, wtd_restore_write);
   register_cell(sfr, STCV1, &cell_stcv1, wtd_restore_write);
   register_cell(sfr, STCV2, &cell_stcv2, wtd_restore_write);
+  register_cell(sfr, STLOAD, &cell_stload, wtd_restore_write);
+  register_cell(sfr, STCC, &cell_stcc, wtd_restore_write);
   register_cell(sfr, CLKCONCMD, &cell_clkconcmd, wtd_restore_write);
   cmp = 0xFFFFFF;
   for (int i=0; i < 2; i++)
@@ -55,7 +61,7 @@ cl_CC2530_sleep_timer::tick(int cycles)
 	}
     }
   if (TimerTicks != 0)
-    TimerTick(TimerTicks);
+    STtick(TimerTicks);
   return(resGO);
 }
 
@@ -96,7 +102,7 @@ cl_CC2530_sleep_timer::write(class cl_memory_cell *cell, t_mem *val)
 {
   if (cell == cell_st0)
     {
-      if (cell_stload->get(bmLDRDY) == 1)
+      if ((cell_stload->get() & bmLDRDY) == 1)
 	{
 	  cmp = (cell_st2->get() << 16) + (cell_st1->get() << 8) + *val;
 	  if (cmp + 5 >= count)
