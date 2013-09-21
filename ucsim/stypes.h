@@ -39,18 +39,21 @@ typedef TYPE_UWORD	t_mem;		/* 16 bit max */
 typedef TYPE_WORD	t_smem;		/* signed 16 bit memory */
 
 /*All cases where a memory part a has an intersection with another memory part r*/
-inline bool has_intersection(t_addr a_start, t_addr a_end, t_addr r_start, t_addr r_end)
+inline bool has_intersection(t_addr a_start,
+			     t_addr a_end,
+			     t_addr r_start,
+			     t_addr r_end)
 {
   assert(a_start <= a_end);
   assert(r_start <= r_end);
 
   /*  return (((a_end >= r_start) || (a_start >= r_start)) &&
       ((r_end >= a_start) || (a_start <= r_start)))   );*/
- return ((a_start <= r_start) && (a_end >= r_start) && (a_end <= r_end) 
-	 || (a_end >= r_start) && (a_end <= r_end) && (a_start >= r_start) && (a_start <= r_end) 
-	 || (a_end >= r_end) && (a_start <= r_start) 
-	 || (a_end >= r_end) && (a_start >= r_start) && (a_start <= r_end));
-   }
+  return (((a_start <= r_start) && (a_end >= r_start) && (a_end <= r_end))
+	  || ((a_end >= r_start) && (a_end <= r_end) && (a_start >= r_start) && (a_start <= r_end))
+	  || ((a_end >= r_end) && (a_start <= r_start))
+	  || ((a_end >= r_end) && (a_start >= r_start) && (a_start <= r_end)));
+}
 
 struct id_element
 {
@@ -127,10 +130,14 @@ enum mem_class
   MEM_IXRAM,
   MEM_TYPES,
   MEM_SRAM,//added by Calypso for cc2530
-  MEM_FLASHBANK0, //added by Calypso for cc2530
+  MEM_FLASHBANK0,
   MEM_FLASHBANK1,
   MEM_FLASHBANK2,
-  MEM_FLASHBANK3
+  MEM_FLASHBANK3,
+  MEM_FLASHBANK4, 
+  MEM_FLASHBANK5,
+  MEM_FLASHBANK6,
+  MEM_FLASHBANK7
 };
 
 #define MEM_ROM_ID	"rom"
@@ -142,7 +149,11 @@ enum mem_class
 #define MEM_FLASHBANK1_ID	"flashbank1"
 #define MEM_FLASHBANK2_ID	"flashbank2"
 #define MEM_FLASHBANK3_ID	"flashbank3"
-#define MEM_SRAM_ID	"sram" //added by Calypso for cc2530
+#define MEM_FLASHBANK4_ID	"flashbank4"
+#define MEM_FLASHBANK5_ID	"flashbank5"
+#define MEM_FLASHBANK6_ID	"flashbank6"
+#define MEM_FLASHBANK7_ID	"flashbank7"
+#define MEM_SRAM_ID	"sram" 
 
 // States of simulator
 #define SIM_NONE	0
@@ -202,16 +213,24 @@ enum brk_event
   brkRIRAM,	/* ri */
   brkWSFR,	/* ws */
   brkRSFR,	/* rs */
-  brkWFLASHBANK0,
-  brkRFLASHBANK0, //added by Calypso for cc2530
+  brkWFLASHBANK0,//added by Calypso for cc2530
+  brkRFLASHBANK0, 
   brkWFLASHBANK1,
   brkRFLASHBANK1,
   brkWFLASHBANK2,
   brkRFLASHBANK2,
   brkWFLASHBANK3,
   brkRFLASHBANK3,
-  brkWSRAM,  //added by Calypso for cc2530
-  brkRSRAM,  //added by Calypso for cc2530
+  brkWFLASHBANK4,
+  brkRFLASHBANK4, 
+  brkWFLASHBANK5,
+  brkRFLASHBANK5,
+  brkWFLASHBANK6,
+  brkRFLASHBANK6,
+  brkWFLASHBANK7,
+  brkRFLASHBANK7,
+  brkWSRAM,
+  brkRSRAM, 
   brkREAD,
   brkWRITE,
   brkACCESS
@@ -255,8 +274,58 @@ enum hw_event {
   EV_T2_MODE_CHANGED,
   EV_T2_EVENT1,
   EV_T2_EVENT2,
-  EV_NO_ACK
+  EV_NO_ACK,
+  EV_RADIO_ACK,
+  EV_T1_CH0,    
+  EV_T1_CH1,    
+  EV_T1_CH2,    
+  EV_T3_CH0,    
+  EV_T3_CH1,    
+  EV_T4_CH0,    
+  EV_T4_CH1,    
+  EV_ST,        
+  EV_IOC_0,       
+  EV_IOC_1,       
+  EV_URX0,      
+  EV_UTX0,      
+  EV_URX1,      
+  EV_UTX1,      
+  EV_FLASH,     
+  EV_RADIO,           
+  EV_DBG_BW,    
 };
+
+static const char* hw_event2str(enum hw_event e) {
+  switch(e) {
+  case EV_OVERFLOW        : return "EV_OVERFLOW"; break;
+  case EV_PORT_CHANGED    : return "EV_PORT_CHANGED"; break;
+  case EV_T2_MODE_CHANGED : return "EV_T2_MODE_CHANGED"; break;
+  case EV_T2_EVENT1       : return "EV_T2_EVENT1"; break;
+  case EV_T2_EVENT2       : return "EV_T2_EVENT2"; break;
+  case EV_NO_ACK          : return "EV_NO_ACK"; break;
+  case EV_RADIO_ACK       : return "EV_RADIO_ACK"; break;
+  case EV_T1_CH0          : return "EV_T1_CH0"; break;
+  case EV_T1_CH1          : return "EV_T1_CH1"; break;
+  case EV_T1_CH2          : return "EV_T1_CH2"; break;
+  case EV_T3_CH0          : return "EV_T3_CH0"; break;
+  case EV_T3_CH1          : return "EV_T3_CH1"; break;
+  case EV_T4_CH0          : return "EV_T4_CH0"; break;
+  case EV_T4_CH1          : return "EV_T4_CH1"; break;
+  case EV_ST              : return "EV_ST"; break;
+  case EV_IOC_0           : return "EV_IOC_0"; break;
+  case EV_IOC_1           : return "EV_IOC_1"; break;
+  case EV_URX0            : return "EV_URX0"; break;
+  case EV_UTX0            : return "EV_UTX0"; break;
+  case EV_URX1            : return "EV_URX1"; break;
+  case EV_UTX1            : return "EV_UTX1"; break;
+  case EV_FLASH           : return "EV_FLASH"; break;
+  case EV_RADIO           : return "EV_RADIO"; break;
+  case EV_DBG_BW          : return "EV_DBG_BW"; break;
+  default:
+    return "(error)";
+    break;
+  }
+}
 
 // flags of hw units
 #define HWF_NONE	0

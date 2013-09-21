@@ -35,7 +35,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "pobjcl.h"
 #include "stypes.h"
 
-
+#define IEN0 0xA8
 /*
  * Interrupt source
  ******************************************************************************
@@ -52,6 +52,7 @@ cl_it_src::cl_it_src(uchar Iie_mask,
 {
   poll_priority= apoll_priority;
   ie_mask = Iie_mask;
+  ie_reg = IEN0;
   src_reg = Isrc_reg;
   src_mask= Isrc_mask;
   addr    = Iaddr;
@@ -63,8 +64,8 @@ cl_it_src::cl_it_src(uchar Iie_mask,
   active= DD_TRUE;
 }
 
-cl_it_src::cl_it_src(uchar Iie_mask,
-		     uchar Iie_Reg,
+cl_it_src::cl_it_src(uchar Iie_Reg,
+		     uchar Iie_mask,
 		     uchar Isrc_reg,
 		     uchar Isrc_mask,
 		     uint  Iaddr,

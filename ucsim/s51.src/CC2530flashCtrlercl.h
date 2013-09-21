@@ -4,6 +4,9 @@
 #include "memcl.h"
 #include "uccl.h"
 
+#define PAGE_SIZE 2048
+#define FLASHBANK_SIZE 32768
+
 struct Word
 {
   int NumberOfWrites;
@@ -14,7 +17,7 @@ struct flashPage
   t_addr StartAddr;
   int NumberOfWrites;
   bool lockbit;
-  struct Word WordTab[1024];
+  struct Word WordTab[PAGE_SIZE];//Page size is 2 Kb
 };
 
 class cl_CC2530_flash_ctrler: public cl_hw
@@ -33,6 +36,10 @@ class cl_CC2530_flash_ctrler: public cl_hw
   class cl_address_space *flashbank1;
   class cl_address_space *flashbank2;
   class cl_address_space *flashbank3;
+  class cl_address_space *flashbank4;
+  class cl_address_space *flashbank5;
+  class cl_address_space *flashbank6;
+  class cl_address_space *flashbank7;
   struct flashPage PageTab[128];
   double freq;
   double TickCount;
@@ -51,10 +58,11 @@ public:
 
   cl_CC2530_flash_ctrler(class cl_uc *auc, int aid, char *aid_string);
   virtual int init(void);
-  virtual double timer(void);
-  virtual void erasePage(int pageNumber);
-  virtual void ChipErase(void);
-  virtual int flashWrite(void);
+  virtual void reset(void);
+  double timer(void);
+  void erasePage(int pageNumber);
+  void ChipErase(void);
+  void flashWrite(void);
   virtual void write(class cl_memory_cell *cell, t_mem *val);
   virtual int tick(int cycles);
 

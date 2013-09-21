@@ -84,6 +84,7 @@ public:
   class cl_ustrings *in_files;
   //class cl_arguments *args;
   class cl_options *options;
+
   int going;
 
 public:

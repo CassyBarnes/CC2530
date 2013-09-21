@@ -27,7 +27,7 @@ cl_CC2530_WDT::init(void)
  register_cell(sfr, IRCON2, &cell_ircon2, wtd_restore_write);
 }
 
-double
+ulong
 cl_CC2530_WDT::get_rtime(void)
 {
   return(MemElapsedTime + systemTicks/freq);

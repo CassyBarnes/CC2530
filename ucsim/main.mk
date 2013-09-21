@@ -32,7 +32,7 @@ LIB_LIST	= util cmd sim
 UCSIM_LIBS	= -Wl,--start-group $(patsubst %,-l%,$(LIB_LIST)) -Wl,--end-group
 UCSIM_LIB_FILES	= $(patsubst %,lib%.a,$(LIB_LIST))
 
-prefix          = /home/calypso/Desktop/UCSIM_BIN
+prefix          = /usr/local
 exec_prefix     = ${prefix}
 bindir          = ${exec_prefix}/bin
 libdir          = ${exec_prefix}/lib

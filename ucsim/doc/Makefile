@@ -11,7 +11,7 @@ INSTALL		= /usr/bin/install -c
 
 PRJDIR		= ..
 
-prefix          = /home/calypso/Desktop/UCSIM_BIN
+prefix          = /usr/local
 exec_prefix     = ${prefix}
 bindir          = ${exec_prefix}/bin
 libdir          = ${exec_prefix}/lib

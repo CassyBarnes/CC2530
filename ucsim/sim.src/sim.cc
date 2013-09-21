@@ -62,6 +62,7 @@ int
 cl_sim::init(void)
 {
   cl_base::init();
+  //state= SIM_GO;//Added by Calypso
   build_cmdset(app->get_commander()->cmdset);
   if (!(uc= mk_controller()))
     return(1);

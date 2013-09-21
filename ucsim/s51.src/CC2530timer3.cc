@@ -19,6 +19,7 @@ cl_CC2530_timer3::cl_CC2530_timer3(class cl_uc *auc, int aid, char *aid_string):
   cl_CC2530_timer<char>(auc, aid, aid_string)
 {
   //TRACE();
+  make_partner(HW_CC2530_DMA, 1);
   addr_tl  = T3CNT;
   sfr= uc->address_space(MEM_SFR_ID);
   ChMax=2;
@@ -64,8 +65,19 @@ cl_CC2530_timer3::init(void)
   assert(cell_tl);
   cell_th = NULL;
 
-  tabCh[0]={0, 0, T3CCTL0, T3CC0, NULL, sfr->read(T3CC0)};
-  tabCh[1]={0, 0, T3CCTL1, T3CC1, NULL, sfr->read(T3CC1)};
+  tabCh[0].IOPin     = bool(0);
+  tabCh[0].ExIOPin   = bool(0);
+  tabCh[0].RegCTL    = t_addr(T3CCTL0);
+  tabCh[0].RegCMPL   = t_addr(T3CC0);
+  tabCh[0].RegCMPH   = t_addr(NULL);
+  tabCh[0].ValRegCMP = sfr->read(T3CC0);
+
+  tabCh[1].IOPin     = bool(0);
+  tabCh[1].ExIOPin   = bool(0);
+  tabCh[1].RegCTL    = t_addr(T3CCTL1);
+  tabCh[1].RegCMPL   = t_addr(T3CC1);
+  tabCh[1].RegCMPH   = t_addr(NULL);
+  tabCh[1].ValRegCMP = sfr->read(T3CC1);
 
   return(0);
 }
@@ -82,16 +94,16 @@ void
 cl_CC2530_timer3::write(class cl_memory_cell *cell, t_mem *val)
 {
   //TRACE();
-  cl_CC2530_timer::write(cell, val);
+  cl_CC2530_timer<char>::write(cell, val);
   //TRACE();
   if (cell == cell_txctl)
     {
       //TRACE();
-	TR=*val & 0x10;
-      if (*val & 0x04 == 1)
+      TR=*val & 0x10;
+      if ((*val & 0x04) == 1)
 	reset();
       prescale = 1 << (*val>>5);
-      freq= CC2530xtal/tickspd;
+      freq= (CC2530xtal/tickspd);
 #ifdef T3INFO
       fprintf(stderr,"Modification of %s control register.\n", id_string);
       fprintf(stderr,
@@ -161,15 +173,11 @@ cl_CC2530_timer3::CaptureCompare(void)
 	    {
 	      ////TRACE();
 	      tabCh[i].IOPin = Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].ValRegCMP);
-#ifdef T3INFO
-	      fprintf(stderr, "Old Flagsreg...0x%04x\n", flagsReg);
-#endif
-	      flagsReg = sfr->read(0x8E);
-	      flagsReg = flagsReg | (0x80 << i);
-	      sfr->write(0x8E, flagsReg);
-#ifdef T3INFO
-	      fprintf(stderr, "New Flagsreg...0x%04x\n", flagsReg);
-#endif
+	      if (i == 0)
+		inform_partners(EV_T3_CH0, 0);
+	      else
+		inform_partners(EV_T3_CH1, 0);
+
 	      cc=1;
 #ifdef T3INFO
 	      fprintf(stderr, "Channel %d in compare mode...\n", i);
@@ -182,7 +190,7 @@ cl_CC2530_timer3::CaptureCompare(void)
     }
   if (cc==1)
     {
-      cl_CC2530_timer::print_info();
+      cl_CC2530_timer<char>::print_info();
     }
   get_next_cc_event();
 }
@@ -191,8 +199,8 @@ cl_CC2530_timer3::CaptureCompare(void)
 void
 cl_CC2530_timer3::TimerTick(int TimerTicks)
 {
-  TRACE();
-  //cl_CC2530_timer::tick(TimerTicks);
+  // TRACE();
+  //cl_CC2530_timer<char>::tick(TimerTicks);
   //TRACE();
 
   if (TR != 0)
@@ -200,10 +208,10 @@ cl_CC2530_timer3::TimerTick(int TimerTicks)
 
       switch (mode)
 	{
-	case 0: cl_CC2530_timer::do_FreeRunningMode(TimerTicks); break;
-	case 1: cl_CC2530_timer::do_DownMode(TimerTicks); break;
-	case 2: cl_CC2530_timer::do_ModuloMode(TimerTicks); break;
-	case 3: cl_CC2530_timer::do_UpDownMode(TimerTicks); break;
+	case 0: cl_CC2530_timer<char>::do_FreeRunningMode(TimerTicks); break;
+	case 1: cl_CC2530_timer<char>::do_DownMode(TimerTicks); break;
+	case 2: cl_CC2530_timer<char>::do_ModuloMode(TimerTicks); break;
+	case 3: cl_CC2530_timer<char>::do_UpDownMode(TimerTicks); break;
 	}
     }
 }
@@ -216,7 +224,7 @@ cl_CC2530_timer3::get_next_cc_event()
   for (int i=0; i<2; i++)
     {
       int valRegCTL;
-      TRACE();	
+      //      TRACE();	
       valRegCTL = (sfr->read(tabCh[i].RegCTL)) & 0x4;
       if ((valRegCTL) != 0)
 	{
@@ -228,8 +236,8 @@ cl_CC2530_timer3::get_next_cc_event()
 	    cmpEventIn = count - tabCh[i].ValRegCMP;
 	  else
 	    cmpEventIn = tabCh[i].ValRegCMP - count;
-	  if (((cmpEventIn > 0) && (cmpEventIn < NextCmpEvent)
-	       || ((NextCmpEvent == -1) && (cmpEventIn != 0))))
+	  if ( ((cmpEventIn > 0) && (cmpEventIn < NextCmpEvent))
+	       || ((NextCmpEvent == -1) && (cmpEventIn != 0)) )
 	    NextCmpEvent = cmpEventIn;
 #ifdef T3INFO
 	  fprintf(stderr, "Channel %d: Compare event in %d Timer ticks...\n", i, cmpEventIn);

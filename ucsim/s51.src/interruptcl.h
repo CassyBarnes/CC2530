@@ -172,11 +172,11 @@ public:
   cl_radio(class cl_uc *auc);
   virtual int init(void);
 
-  virtual void added_to_uc(void);
+  // virtual void added_to_uc(void);
 
   //virtual t_mem read(class cl_memory_cell *cell);
-  virtual void write(class cl_memory_cell *cell, t_mem *val);
- virtual t_mem read(class cl_memory_cell *cell);
+  //virtual void write(class cl_memory_cell *cell, t_mem *val);
+  //virtual t_mem read(class cl_memory_cell *cell);
 
   //virtual void mem_cell_changed(class cl_m *mem, t_addr addr);
 

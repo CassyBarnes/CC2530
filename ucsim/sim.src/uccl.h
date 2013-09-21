@@ -44,6 +44,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define TICK_INISR	0x02
 #define TICK_IDLE	0x03
 
+enum CC2530Simulators{
+  SIMULATOR_A = 0,
+  SIMULATOR_B = 1
+};
+
 class cl_ticker: public cl_base
 {
 public:
@@ -76,6 +81,7 @@ public:
 class cl_uc: public cl_base
 {
 public:
+  int count0;
   int type;			// CPU family
   int technology;		// CMOS, HMOS
   int state;			// GO, IDLE, PD
@@ -90,7 +96,9 @@ public:
   class cl_list *counters;	// User definable timers (tickers)
   int inst_ticks;		// ticks of an instruction
   double xtal;			// Clock speed
-
+  enum CC2530Simulators Simulator;
+  class cl_memory *flashbank;
+  uint flashOffset;
 
   int brk_counter;		// Number of breakpoints
   class brk_coll *fbrk;		// Collection of FETCH break-points
@@ -231,6 +239,9 @@ public:
   virtual void error(class cl_error *error);
   virtual void check_errors(void);
   
+  void get_flashbank(uint addr); //Added by Calypso for CC2530 use
+  
+
   /* Following fields and virtual methods defined in uc51 I don't have
      energy to redesign them:-( */
 public:

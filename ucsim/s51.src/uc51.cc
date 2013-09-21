@@ -167,6 +167,8 @@ cl_51core::mk_hw_elements(void)
   hws->add(CC2530DMA);
   CC2530flashctrler = new cl_CC2530_flash_ctrler(this, 1, "CC2530flash_controller");
   hws->add(CC2530flashctrler);
+  CC2530radio = new cl_CC2530_radio(this, 1, "CC2530radio");
+  hws->add(CC2530radio);
   //h->init();//Calypso
   hws->add(h= new cl_serial(this));
   h->init();
@@ -258,6 +260,18 @@ cl_51core::make_memories(void)
   flashbank3= as= new cl_address_space(MEM_FLASHBANK3_ID, 0, 0x8000, 8, 0x8000);
   as->init();
   address_spaces->add(as);
+  flashbank4= as= new cl_address_space(MEM_FLASHBANK4_ID, 0, 0x8000, 8, 0x8000);
+  as->init();
+  address_spaces->add(as);
+  flashbank5= as= new cl_address_space(MEM_FLASHBANK5_ID, 0, 0x8000, 8, 0x8000);
+  as->init();
+  address_spaces->add(as);
+  flashbank6= as= new cl_address_space(MEM_FLASHBANK6_ID, 0, 0x8000, 8, 0x8000);
+  as->init();
+  address_spaces->add(as);
+  flashbank7= as= new cl_address_space(MEM_FLASHBANK7_ID, 0, 0x8000, 8, 0x8000);
+  as->init();
+  address_spaces->add(as);
   sram= as= new cl_address_space(MEM_SRAM_ID, 0x00, 0x2000, 8, 0);
   as->init();
   address_spaces->add(as);
@@ -332,6 +346,10 @@ cl_51core::make_memories(void)
   flashbank1->define_memories();
   flashbank2->define_memories();
   flashbank3->define_memories();
+  flashbank4->define_memories();
+  flashbank5->define_memories();
+  flashbank6->define_memories();
+  flashbank7->define_memories();
   sram->define_memories();
 
   acc= sfr->get_cell(ACC);
@@ -504,7 +522,7 @@ cl_51core::print_regs(class cl_console *con)
 
   start= psw->get() & 0x18;
   //dump_memory(iram, &start, start+7, 8, /*sim->cmd_out()*/con, sim);
-  //iram->dump(start, start+7, 8, con);//Com by Calypso
+  //iram->dumpx(start, start+7, 8, con);//Com by Calypso
   start= psw->get() & 0x18;
   // data= iram->get(iram->get(start));Commented by Calypso, would cause invalid address errors whenever R0 contained too big a value...
 

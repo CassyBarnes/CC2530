@@ -117,7 +117,9 @@ cl_51core::inst_mov_rn_Sdata(uchar code)
 int
 cl_51core::inst_movc_a_Sa_pc(uchar code)
 {
+  CC2530radio->MovInstruction = true;
   acc->write(rom->read(PC + acc->read()));
+  CC2530radio->MovInstruction = false;
   tick(1);
   return(resGO);
 }
@@ -133,11 +135,12 @@ int
 cl_51core::inst_mov_addr_addr(uchar code)
 {
   class cl_memory_cell *d, *s;
-
+  CC2530radio->MovInstruction = true;
   /* SD reversed s & d here */
   s= get_direct(fetch());
   d= get_direct(fetch());
   d->write(s->read());
+  CC2530radio->MovInstruction = false;
   tick(1);
   return(resGO);
 }
@@ -205,7 +208,9 @@ cl_51core::inst_mov_dptr_Sdata(uchar code)
 int
 cl_51core::inst_movc_a_Sa_dptr(uchar code)
 {
+  //CC2530radio->MovInstruction = true;
   acc->write(rom->read(sfr->read(DPH)*256+sfr->read(DPL) +  acc->read()));
+  //CC2530radio->MovInstruction = false;
   tick(1);
   return(resGO);
 }
@@ -221,11 +226,13 @@ int
 cl_51core::inst_mov_Sri_addr(uchar code)
 {
   class cl_memory_cell *d, *s;
-
+  CC2530radio->MovInstruction = true;
   d= iram->get_cell(get_reg(code & 0x01)->read());
   s= get_direct(fetch());
   d->write(s->read());
+  CC2530radio->MovInstruction = false;
   tick(1);
+
   return(resGO);
 }
 
@@ -240,10 +247,11 @@ int
 cl_51core::inst_mov_rn_addr(uchar code)
 {
   class cl_memory_cell *reg, *cell;
-
+  CC2530radio->MovInstruction = true;
   reg = get_reg(code & 0x07);
   cell= get_direct(fetch());
   reg->write(cell->read());
+  CC2530radio->MovInstruction = false;
   tick(1);
   return(resGO);
 }
@@ -393,9 +401,10 @@ int
 cl_51core::inst_movx_a_Sdptr(uchar code)
 {
   t_mem d;
-
+  CC2530radio->MovInstruction = true;
   d=xram->read(sfr->read(DPH)*256 + sfr->read(DPL));
   acc->write(d);
+  CC2530radio->MovInstruction = false;
   tick(1);
   return(resGO);
 }
@@ -414,7 +423,7 @@ cl_51core::inst_movx_a_Sri(uchar code)
 
   d= get_reg(code & 0x01)->read();
 
-#ifdef CC2530
+  #ifdef CC2530
   mpage= sfr->read(MPAGE);
   if (mpage==0x70 && d>=0x80){
     acc->write(sfr->read(mpage*256 + d));
@@ -425,7 +434,7 @@ cl_51core::inst_movx_a_Sri(uchar code)
   }
 #else
   acc->write(xram->read(sfr->read(P2)*256 + d));
-#endif // CC2530
+  #endif 
   tick(1);
   return(resGO);
 }
@@ -442,7 +451,7 @@ cl_51core::inst_mov_a_addr(uchar code)
 {
   class cl_memory_cell *cell;
   t_addr address= fetch();
-  
+    CC2530radio->MovInstruction = true;
   /* If this is ACC, it is an invalid instruction */
   if (address == ACC)
     {
@@ -455,6 +464,7 @@ cl_51core::inst_mov_a_addr(uchar code)
       cell= get_direct(address);
       acc->write(cell->read());
     }
+  CC2530radio->MovInstruction = false;
   return(resGO);
 }
 
@@ -508,7 +518,7 @@ cl_51core::inst_movx_Sdptr_a(uchar code)
   else
     {
       xram->write(dp, acc->read());
-      fprintf(stderr, "MOVX: Writing %d in xram at @ %d\n", acc->read(), dp);
+      fprintf(stderr, "MOVX: Writing 0x%02x in xram at @ 0x%04x\n", acc->read(), dp);
     }
 #else
   xram->write(dp, acc->read());
@@ -530,10 +540,10 @@ cl_51core::inst_movx_Sri_a(uchar code)
   t_mem d, mpage;
 
   d= get_reg(code & 0x01)->read();
-#ifndef CC2530
+  #ifndef CC2530
   xram->write(sfr->read(P2)*256 + d, acc->read());
 #endif
-#ifdef CC2530
+  #ifdef CC2530
   TRACE();
   mpage=sfr->read(MPAGE);
   if ((mpage == 0x70) && (d >= 0x80)) {

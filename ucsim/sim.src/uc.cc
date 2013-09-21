@@ -31,6 +31,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
+#include <assert.h>
 #include "i_string.h"
 
 #include "../s51.src/regs51.h"
@@ -58,6 +59,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "simcl.h"
 #include "itsrccl.h"
 
+#define FLASHBANK_SIZE 0x8000
 
 /*
  * Clock counter
@@ -135,13 +137,14 @@ cl_uc::cl_uc(class cl_sim *asim):
   cl_base()
 {
   //int i;
+  count0 = 0;
   sim = asim;
   //mems= new cl_list(MEM_TYPES, 1);
   memchips= new cl_list(2, 2, "memchips");
   address_spaces= new cl_address_space_list(this);
   //address_decoders= new cl_list(2, 2);
   rom= 0;
-
+  Simulator = SIMULATOR_A;//default init, modified in main (s51.cc)
   hws = new cl_hws();
   //options= new cl_list(2, 2);
   //for (i= MEM_ROM; i < MEM_TYPES; i++) mems->add(0);
@@ -161,6 +164,7 @@ cl_uc::cl_uc(class cl_sim *asim):
   sp_max= 0;
   sp_avg= 0;
   inst_exec= DD_FALSE;
+  flashOffset = 0;
 }
 
 
@@ -213,12 +217,15 @@ cl_uc::init(void)
 
   for (i= 0; i < sim->app->in_files->count; i++)
     {
-      char *fname= (char *)(sim->app->in_files->at(i));
-      long l;
-      if ((l= read_hex_file(fname)) >= 0)
+      if (i == Simulator)
 	{
-	  sim->app->get_commander()->all_printf("%ld words read from %s\n",
-						l, fname);
+	  char *fname= (char *)(sim->app->in_files->at(i));
+	  long l;
+	  if ((l= read_hex_file(fname)) >= 0)
+	    {
+	      sim->app->get_commander()->all_printf("%ld words read from %s\n",
+						    l, fname);
+	    }
 	}
     }
   return(0);
@@ -337,6 +344,16 @@ cl_uc::build_cmdset(class cl_cmdset *cmdset)
 "dump bit...        Dump bits",
 "long help of dump"));
   cmd->init();
+
+
+  //Added by Calypso
+  cmdset->add(cmd= new cl_debug_dump_cmd("debug_dump", DD_TRUE,
+"debug dump memory_type [start [stop [bytes_per_line]]]\n"
+"                   Dump memory of specified type\n"
+"dump bit...        Dump bits",
+"long help of dump"));
+  cmd->init();
+
 
   cmdset->add(cmd= new cl_dch_cmd("dch", DD_TRUE,
 "dch [start [stop]] Dump code in hex form",
@@ -739,7 +756,8 @@ cl_uc::read_hex_file(const char *nam)
   bool ok, get_low= 1;
   uchar low= 0, high;
 
-  class cl_memory *flashbank0 = memory("flashbank0");
+  //class cl_memory *flashbank0 = memory("flashbank0");
+  flashbank = memory("flashbank0");
 
   if (!rom)
     {
@@ -792,18 +810,30 @@ cl_uc::read_hex_file(const char *nam)
 		{
 		  if (rtyp == 0)
 		    {
-		      if (rom->width > 8)
+		      if (flashbank->width > 8)
 			addr/= 2;
 		      for (i= 0; i < dnum; i++)
 			{
-			  if (rom->width <= 8)
+			  /*if (addr >= 0x8000)
+			    {
+			      xtal = xtal/2;
+			      }*/
+			  get_flashbank(addr);
+
+			  if (flashbank->width <= 8)
 			    {
 			      // rom->set(addr, rec[i]);
-			      flashbank0->set(addr, rec[i]); 
+			      flashbank->set(addr - flashOffset, rec[i]); 
+			      /*			      fprintf(stderr, "Addr: 0x%08x Writing 0x%02x at @ 0x%06x in %s\n", addr, rec[i], addr - flashOffset, flashbank->get_name());*/
+			      if (addr == 0xFFFE)
+				{
+				  addr--;
+				  addr++;
+				}
 			      addr++;
 			      written++;
 			    }
-			  else if (rom->width <= 16)
+			  else if (flashbank->width <= 16)
 			    {
 			      if (get_low)
 				{
@@ -814,7 +844,7 @@ cl_uc::read_hex_file(const char *nam)
 				{
 				  high= rec[i];
 				  // rom->set(addr, (high*256)+low);
-				  flashbank0->set(addr, (high*256)+low);
+				  flashbank->set(addr - flashOffset, (high*256)+low);
 				  addr++;
 				  written++;
 				  get_low= 1;
@@ -843,6 +873,7 @@ cl_uc::read_hex_file(const char *nam)
     fclose(f);
   application->debug("%ld records have been read\n", recnum);
   analyze(0);
+  fprintf(stderr, "COUNT is %08x\n", count0);
   return(written);
 }
 
@@ -890,6 +921,57 @@ cl_uc::there_is_inst(void)
   return(got);
 }
 
+void
+cl_uc::get_flashbank(uint addr)
+{
+  if (addr < FLASHBANK_SIZE)
+    {
+      flashbank = memory("flashbank0");
+      count0++;
+      flashOffset = 0;
+      //fprintf(stderr, "Switching to flashbank1, reached @ 0x%02x!\n", addr);
+    }
+  else if (addr < (FLASHBANK_SIZE<<1))
+    {
+      flashbank = memory("flashbank1");
+      flashOffset = (FLASHBANK_SIZE);
+    }
+  else if (addr < (FLASHBANK_SIZE*3))
+    {
+      flashbank = memory("flashbank2");
+      flashOffset = (FLASHBANK_SIZE<<1);
+    }
+  else if (addr < (FLASHBANK_SIZE<<2))
+    {
+      flashbank = memory("flashbank3");
+      flashOffset = (FLASHBANK_SIZE*3);
+    }
+  else if (addr < (FLASHBANK_SIZE*5))
+    {
+      flashbank = memory("flashbank4");
+      flashOffset = (FLASHBANK_SIZE<<2);
+    }
+  else if (addr < (FLASHBANK_SIZE*6))
+    {
+      flashbank = memory("flashbank5");
+      flashOffset = (FLASHBANK_SIZE*5);
+    }
+  else if (addr < (FLASHBANK_SIZE*7))
+    {
+      flashbank = memory("flashbank6");
+      flashOffset = (FLASHBANK_SIZE*6);
+    }
+  else if (addr < (FLASHBANK_SIZE<<3))
+    {
+      flashbank = memory("flashbank7");
+      flashOffset = (FLASHBANK_SIZE*7);
+    }
+  else
+    {
+      fprintf(stderr, "FLASH Memory full!\n");
+      assert(false);
+    }
+}
 
 /*
  * Manipulating HW elements of the CPU
@@ -1549,7 +1631,9 @@ cl_uc::do_inst(int step)
       post_inst();
     }
   if (res != resGO)
-    sim->stop(res);
+    {
+      sim->stop(res);
+    }
   return(res);
 }
 

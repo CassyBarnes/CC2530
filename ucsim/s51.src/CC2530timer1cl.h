@@ -32,7 +32,6 @@ public:
   virtual void get_next_cc_event();
   virtual void reset(void);
   virtual void write(class cl_memory_cell *cell, t_mem *val);
-  //virtual int tick(int cycles);
 
   //virtual void happen(class cl_hw *where, enum hw_event he, void *params);
 

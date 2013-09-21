@@ -146,7 +146,7 @@ int
 cl_app::run(void)
 {
   int done= 0;
-  //fprintf(stderr, "Hello from Calypso in cl_app::run !\n");
+
   while (!done &&
 	 going)
     {
@@ -481,7 +481,10 @@ cl_app::proc_arguments(int argc, char *argv[])
       }
 
   for (i= optind; i < argc; i++)
-    in_files->add(argv[i]);
+    {
+      if (strcmp(argv[i], "CC2530") != 0)
+	in_files->add(argv[i]);
+    }
 
   return(0);
 }

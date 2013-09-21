@@ -4,7 +4,7 @@
 #include "regs51.h"
 #include "types51.h"
 
-#define DEBUG
+#undef DEBUG
 #ifdef DEBUG
 #define TRACE() \
 fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
@@ -12,7 +12,7 @@ fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
 #define TRACE()
 #endif
 
-#define T2INFO
+#undef T2INFO
 
 #ifndef CC2530xtal
 #define CC2530xtal 32000000
@@ -21,8 +21,9 @@ fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
 cl_CC2530_timer2::cl_CC2530_timer2(class cl_uc *auc, int aid, char *aid_string):
   cl_hw(auc, HW_MAC_TIMER, aid, aid_string)
 {
-  make_partner(HW_CC2530_USART, 0);
-  make_partner(HW_CC2530_RADIO, 0);
+  make_partner(HW_CC2530_USART, 1);
+  make_partner(HW_CC2530_RADIO, 1);
+  make_partner(HW_CC2530_DMA, 1);
   sfr= uc->address_space(MEM_SFR_ID);
   xram= uc->address_space(MEM_XRAM_ID);
   init();
@@ -32,8 +33,9 @@ int
 cl_CC2530_timer2::init(void)
 {
   TRACE();
-  //CC2530xtal=32000000;
+
   fprintf(stderr, "CC2530xtal init at %d Hz\n", CC2530xtal);
+
   events[0] = "1 (Period)";
   events[1] = "1 (Compare 1)";
   events[2] = "1 (Compare 2)";
@@ -42,11 +44,7 @@ cl_CC2530_timer2::init(void)
   events[5] = "1 (OVF Compare 2)";
   events[6] = "0";
   assert(sfr);
-  TimerTicks = 0;
-  ticks = 0;
-  freq = CC2530xtal;
-  count = 0;
-  mode = 0;
+
   modes[0] = "   Up Mode   ";
   modes[1] = " Delta Mode  ";
 
@@ -62,7 +60,57 @@ cl_CC2530_timer2::init(void)
   register_cell(sfr, T2MOVF2, &cell_t2movf2, wtd_restore_write);
   register_cell(sfr, CLKCONCMD, &cell_clkconcmd, wtd_restore_write);
   register_cell(xram, CSPT, &cell_cspt, wtd_restore_write);
+  register_cell(sfr, 0x94, &cell_1, wtd_restore_write);
+  register_cell(sfr, 0xc1, &cell_2, wtd_restore_write);
+  register_cell(sfr, 0xc2, &cell_3, wtd_restore_write);
   return(0);
+}
+
+void
+cl_CC2530_timer2::reset(void)
+{
+  TimerTicks = 0;
+  ticks = 0;
+  freq = CC2530xtal;
+  count = 0;
+  mode = 0;
+
+  T2_EVENT1 = false; 
+  T2_EVENT2 = false;
+  event = false;
+  run = false;
+  tickspd = 0; 
+  t2msel = 0; 
+  t2movfsel = 0; 
+  evtcfg1 = 0; 
+  evtcfg2 = 0;
+  systemTicks = 0;
+  MemElapsedTime = 0;
+  MemSystemTicks = 0;
+  OVF0 = 0; 
+  OVF1 = 0; 
+  OVF2 = 0; 
+  OVFcap0 = 0;
+  OVFcap1 = 0; 
+  OVFcap2 = 0;
+  OVFper0 = 0; 
+  OVFper1 = 0;
+  OVFper2 = 0;
+  OVFcmp1_0 = 0;
+  OVFcmp1_1 = 0;
+  OVFcmp1_2 = 0;
+  OVFcmp2_0 = 0;
+  OVFcmp2_1 = 0;
+  OVFcmp2_2 = 0;
+  event1 = 0;
+  event2 = 0; 
+  noEvent = 0;
+  bm_evtcfg1 = 0;
+  bm_evtcfg2 = 0;
+  t2_cap = 0;
+  t2_per = 0;  
+  t2_cmp1 = 0;
+  t2_cmp2 = 0;
 }
 
 int
@@ -85,67 +133,8 @@ cl_CC2530_timer2::tick(int cycles)
     case 1: do_DeltaMode(cycles); break;
     }
   
-  /*  t2movfsel = ((cell_t2msel->get()) >> 4) & 0x07;
-  t2msel = cell_t2msel->get() & 0x07;
-  switch (t2movfsel)
-    {
-    case 0: 
-      cell_t2movf0->set(OVF0);
-      cell_t2movf1->set(OVF1);
-      cell_t2movf2->set(OVF2);
-      break;
-    case 1:
-      cell_t2movf0->set(OVFcap0);
-      cell_t2movf1->set(OVFcap1);
-      cell_t2movf2->set(OVFcap2);
-      break;	
-    case 2:
-      cell_t2movf0->set(OVFper0);
-      cell_t2movf1->set(OVFper1);
-      cell_t2movf2->set(OVFper2);
-      break;	
-    case 3:
-      cell_t2movf0->set(OVFcmp1_0);
-      cell_t2movf1->set(OVFcmp1_1);
-      cell_t2movf2->set(OVFcmp1_2);
-      break;	
-    case 4:
-      cell_t2movf0->set(OVFcmp2_0);
-      cell_t2movf1->set(OVFcmp2_1);
-      cell_t2movf2->set(OVFcmp2_2);
-      break;
-    default:
-      fprintf(stderr, "ERROR in T2MSEL register configuration.\n");
-      break;
-    }
-  int t2msel = cell_t2msel->get() & 0x07;
-  switch (t2msel)
-    {
-    case 0: 
-      cell_t2m0->set(count & 0xFF);
-      cell_t2m1->set((count>>8) & 0xFF);
-      break;
-    case 1: 
-      cell_t2m0->set(t2_cap & 0xFF);
-      cell_t2m1->set((t2_cap>>8) & 0xFF);
-      break;
-    case 2: 
-      cell_t2m0->set(t2_per & 0xFF);
-      cell_t2m1->set((t2_per>>8) & 0xFF);
-      break;
-    case 3: 
-      cell_t2m0->set(t2_cmp1 & 0xFF);
-      cell_t2m1->set((t2_cmp1>>8) & 0xFF);
-      break;
-    case 4: 
-      cell_t2m0->set(t2_cmp2 & 0xFF);
-      cell_t2m1->set((t2_cmp2>>8) & 0xFF);
-      break;
-    default:
-      fprintf(stderr, "ERROR in T2MSEL register configuration.\n");
-      break;
-      }*/
   fprintf(stderr, "Timer MAC count: 0x%02x.\n", count);
+  return(resGO);
 }
 
 double
@@ -297,16 +286,19 @@ cl_CC2530_timer2::write(class cl_memory_cell *cell, t_mem *val)
 t_mem
 cl_CC2530_timer2::read(class cl_memory_cell *cell)
 {
+  
   t_mem d = 0;
   if (cell == cell_t2m0)
     {
       switch (t2msel)
 	{
 	case 0: 
+	  TRACE();
 	  d = count & 0xFF;
 	  fprintf(stderr, "reading t2m0, value should be %d.\n", count & 0xFF);
 	  return(d);
 	case 1:
+	  TRACE();
 	  d = t2_cap & 0xFF;
 	  return(d);
 	  break;
@@ -332,6 +324,7 @@ cl_CC2530_timer2::read(class cl_memory_cell *cell)
       switch (t2msel)
 	{
 	case 0: 
+	  TRACE();
 	  d = (count>>8) & 0xFF;
 	  return(d);
 	  break;
@@ -422,6 +415,7 @@ cl_CC2530_timer2::read(class cl_memory_cell *cell)
 	default: break;
 	}
     }
+  return(cell->get());
 }
 
 int
@@ -457,6 +451,7 @@ cl_CC2530_timer2::do_DeltaMode(int cycles)//mode 4: down from TxCC0
 	}
       CountCompare();
     }
+  return(0);
 }
 
 void
@@ -468,6 +463,8 @@ cl_CC2530_timer2::overflow(void)
   if (cspt != 0xFF)
     cell_cspt->set(cspt - 1);
   print_info();
+  TRACE();
+  //Increment of overflow count
   OVF0++;
   if (OVF0 == 0)
     {
@@ -512,42 +509,54 @@ cl_CC2530_timer2::CountCompare(void)
   T2_EVENT2 = false;
   if (count == t2_cmp1)
     {
+      //set interrupt flag
       cell_t2irqf->set_bit1(0x02);
       if ((sfr->read(T2IRQM) & 0x02) == 1)
 	cell_ircon->set_bit1(bmT2IF);
+      //Signal that an event has occured
       event = true;
       fprintf(stderr, "COMPARE 1 EVENT! Count: %d\n", count);
     }
   if (count == t2_cmp2)
     {
+      //set interrupt flag
       cell_t2irqf->set_bit1(0x04);
       if ((sfr->read(T2IRQM) & 0x04) == 1)
 	cell_ircon->set_bit1(bmT2IF);
+      //Signal that an event has occured
       event = true;
     }
-  if ((count == t2_per) && (t2_per != 0))
+  if ((count == t2_per) && (t2_per != 0))//if count has reached period
     {
       fprintf(stderr, "PERIOD EVENT! Count: %d\n", count);
       count=0;
       overflow();
+      //set interrupt flag
       cell_t2irqf->set_bit1(0x01);
       if ((sfr->read(T2IRQM) & 0x01) == 1)
 	cell_ircon->set_bit1(bmT2IF);
+      //Signal that an event has occured
       event = true;
     }
 
   //events...
   if (event)
     {
+      //Selects the event that triggers a T2_EVENT1 pulse
       evtcfg1 = cell_t2evtcfg->get() & 0x07;
       bm_evtcfg1 = 1;
-      for (int i; i<evtcfg1; i++)
+      for (int i = 0; i<evtcfg1; i++)
 	bm_evtcfg1 <<= 1;
+      //testing if the flag corresponding to the trigger event has been set
       T2_EVENT1 = (cell_t2irqf->get() & bm_evtcfg1) != 0;//true if watched event has happened 
+      //Selects the event that triggers a T2_EVENT2 pulse
       evtcfg2 = ((cell_t2evtcfg->get()) >> 4) & 0x07;
       bm_evtcfg2 = 1;
-      for (int i; i<evtcfg2; i++)
-	bm_evtcfg2 <<= 1;
+      fprintf(stderr, "evtcfg2 is 0x%02x\n", evtcfg2);
+      for (int i = 0; i < evtcfg2; i++)
+	{
+	  bm_evtcfg2 <<= 1;
+	}
       T2_EVENT2 = (cell_t2irqf->get() & bm_evtcfg2) != 0;
     }
   else
@@ -556,7 +565,8 @@ cl_CC2530_timer2::CountCompare(void)
       T2_EVENT1 = 0;
       T2_EVENT2 = 0;
     }
-  fprintf(stderr, "MAC TIMER OUTPUTS: EVENT1: %s\tEVENT2: %s\n",T2_EVENT1?events[evtcfg1]:events[6], T2_EVENT2?events[evtcfg2]:events[6]);
+  TRACE();
+  //fprintf(stderr, "MAC TIMER OUTPUTS: EVENT1: %s\tEVENT2: %s\n",T2_EVENT1?events[evtcfg1]:events[6], T2_EVENT2?events[evtcfg2]:events[6]);
 }
 
 void
@@ -571,7 +581,7 @@ cl_CC2530_timer2::print_info()
   fprintf(stderr,"\n***********  %s[%d] Count: 0x%04x", id_string, id,
 		 count);
   fprintf(stderr," %s*************\n", modes[mode]);
-  fprintf(stderr,"Timer Frequency: %g Hz\tCC2530 Crystal: %d Hz", freq, CC2530xtal);
+  fprintf(stderr,"System Frequency: %g Hz\tCC2530 Crystal: %d Hz", freq, CC2530xtal);
   fprintf(stderr,"\nTime elapsed: %g s", get_rtime());
 
   fprintf(stderr,"\n*********************************");

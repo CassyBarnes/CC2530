@@ -826,10 +826,10 @@ cl_m::set_brk(t_addr addr, class cl_brk *brk)
 
   switch (brk->get_event()) //modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: case brkWSRAM:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: case brkWFLASHBANK4: case brkWFLASHBANK5: case brkWFLASHBANK6: case brkWFLASHBANK7: case brkWSRAM:
       e= 'W';
       break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: case brkRSRAM:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: case brkRFLASHBANK4: case brkRFLASHBANK5: case brkRFLASHBANK6: case brkRFLASHBANK7: case brkRSRAM:
       e= 'R';
       break;
     case brkNONE:
@@ -909,8 +909,8 @@ cl_m::del_brk(t_addr addr, class cl_brk *brk)
 
   switch (brk->get_event()) //modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkRSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: case brkWSRAM: e= 'W'; break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR:  case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: case brkRSRAM:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkRSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: case brkWFLASHBANK4: case brkWFLASHBANK5: case brkWFLASHBANK6: case brkWFLASHBANK7: case brkWSRAM: e= 'W'; break;
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR:  case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3:  case brkRFLASHBANK4: case brkRFLASHBANK5: case brkRFLASHBANK6: case brkRFLASHBANK7: case brkRSRAM:
       e= 'R';
       break;
     case brkNONE:
@@ -1305,11 +1305,11 @@ cl_event_handler::add_bp(class cl_brk *bp)
     return(CELL_NORMAL);
   switch (bp->get_event()) //Modified by Calypso for CC2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: case brkWSRAM:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: case brkWFLASHBANK4: case brkWFLASHBANK5: case brkWFLASHBANK6: case brkWFLASHBANK7: case brkWSRAM:
       t|= CELL_WRITE_BRK;
       write_bps->add(bp);
       break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: case brkRSRAM:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: case brkRFLASHBANK4: case brkRFLASHBANK5: case brkRFLASHBANK6: case brkRFLASHBANK7: case brkRSRAM:
       t|= CELL_READ_BRK;
       read_bps->add(bp);
       break;

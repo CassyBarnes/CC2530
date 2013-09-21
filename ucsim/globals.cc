@@ -50,6 +50,10 @@ struct id_element mem_ids[]= {
   { MEM_FLASHBANK1, "FLASHBANK1" },
   { MEM_FLASHBANK2, "FLASHBANK2" },
   { MEM_FLASHBANK3, "FLASHBANK3" },
+  { MEM_FLASHBANK4, "FLASHBANK4" },
+  { MEM_FLASHBANK5, "FLASHBANK5" },
+  { MEM_FLASHBANK6, "FLASHBANK6" },
+  { MEM_FLASHBANK7, "FLASHBANK7" },
   { MEM_SRAM, "SRAM" },//added by Calypso for CC2530
   { 0, 0 }
 };
@@ -65,7 +69,11 @@ struct id_element mem_classes[]= {
   { MEM_FLASHBANK1, "flashbank1" },
   { MEM_FLASHBANK2, "flashbank2" },
   { MEM_FLASHBANK3, "flashbank3" },
-  { MEM_SRAM, "sram" },//added by Calypso for CC2530 
+  { MEM_FLASHBANK4, "flashbank4" },
+  { MEM_FLASHBANK5, "flashbank5" },
+  { MEM_FLASHBANK6, "flashbank6" },
+  { MEM_FLASHBANK7, "flashbank7" },
+  { MEM_SRAM, "sram" },
   { 0, 0 }
 };
 

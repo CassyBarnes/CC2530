@@ -22,11 +22,6 @@ template<class T>
 cl_CC2530_timer<T>::cl_CC2530_timer(class cl_uc *auc, int aid, char *aid_string):
   cl_hw(auc, HW_TIMER, aid, aid_string)
 {
-  volatile int callnbr = 0;
-  /*#ifdef DEBUG
-  callnbr++;
-  fprintf(stderr, "Called %d times\n\n", callnbr);
-  #endif*/
   mask_M0  = bmM0;//M0 and M1 used to select mode
   mask_M1  = bmM1;
   sfr= uc->address_space(MEM_SFR_ID);
@@ -43,9 +38,16 @@ cl_CC2530_timer<T>::init(void)
   fprintf(stderr, "CC2530xtal at %d Hz\n", CC2530xtal);
   register_cell(sfr, CLKCONCMD, &cell_clkconcmd, wtd_restore_write);
   register_cell(sfr, IRCON, &cell_ircon, wtd_restore_write);
-  PinEvent = false;
+  addr_tl  = T1CNTL;//default value for initialisation
+  addr_th  = T1CNTH;
+  //cell_tl = NULL;
+  use_cell(sfr, addr_tl, &cell_tl, wtd_restore);
+  //assert(cell_tl);
+  use_cell(sfr, addr_th, &cell_th, wtd_restore);
+  reset();
   return(0);
 }
+
 
 template<class T>
 int
@@ -88,7 +90,34 @@ cl_CC2530_timer<T>::reset(void)
   cell_tl->write(0);
   if (cell_th != NULL)
     cell_th->write(0);
-  ticks=0;
+
+  PinEvent = false;
+  up_down = false;
+  cc = false;
+  risingEdge = false;
+  capt = false;
+  up_down_changed = false;
+  mask_TF = 0;
+  captureMode = 0;
+  addr_tl = 0;
+  addr_th = 0;
+  mode = 0;
+  decal = 0;
+  ChMax = 0;
+  TR = 0;
+  IrconFlag = 0;
+  OVFIFMask = 0;
+  OVFMaskMask = 0;
+  ctrl = 0;
+  tickcount = 0;
+  TimerTicks = 0;
+  tickspd = 0;
+  prescale = 0;
+  ticks = 0; 
+  freq = 0;
+  systemTicks = 0;
+  MemElapsedTime = 0;
+  MemSystemTicks = 0;
 }
 
 
@@ -284,7 +313,7 @@ cl_CC2530_timer<T>::write(class cl_memory_cell *cell, t_mem *val)
       MemElapsedTime = get_rtime();
       MemSystemTicks = systemTicks;
       systemTicks=0;
-      freq= CC2530xtal/(tickspd);
+      freq= (CC2530xtal/(tickspd));
 #ifdef TINFO
       fprintf(stderr,"switch value: %d in %s: tickspeed / %d\n",
 	      (*val & bmTickSpd) >> 3,
@@ -439,7 +468,7 @@ cl_CC2530_timer<T>::do_UpDownMode(int cycles)//mode 3: up/down to TxCC0
 
 
 template<class T>
-int
+void
 cl_CC2530_timer<T>::do_DownMode(int cycles)//mode 4: down from TxCC0
 {
   while (cycles--)
@@ -515,7 +544,7 @@ cl_CC2530_timer<T>::print_info()
   fprintf(stderr," %s*************\n", modes[mode]);
   fprintf(stderr,"Prescale value: %d\t\tSystem clk division: %d\n", 
 	  prescale, tickspd);
-  fprintf(stderr,"Timer Frequency: %g Hz\tCC2530 Crystal: %d Hz", freq, CC2530xtal);
+  fprintf(stderr,"System Frequency: %g Hz\tCC2530 Crystal: %d Hz", freq, CC2530xtal);
   fprintf(stderr,"\nTime elapsed: %g s\n", get_rtime());
   fprintf(stderr,"%s IOPins:\t", id_string);
   for (int i=0; i<ChMax; i++)

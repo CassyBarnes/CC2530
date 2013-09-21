@@ -44,9 +44,12 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define DEBUG
 #ifdef DEBUG
 #define TRACE() \
-fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
+ fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
+#define TRACE_STR(str, ...)						\
+ fprintf(stderr, "%s:%d in %s()\n" str, __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 #else
 #define TRACE()
+#define TRACE_STR(str, ...)
 #endif
 
 enum what_to_do_on_cell_change {

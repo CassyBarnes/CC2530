@@ -11,12 +11,12 @@ class cl_CC2530_WDT: public cl_hw
   class cl_memory_cell *cell_clkconcmd;
   class cl_memory_cell *cell_ircon2;
   class cl_address_space *sfr;
-  double freq;
-  double CC2530freq;
-  double systemTicks;
-  double TimerTicks;
-  double MemElapsedTime;
-  double MemSystemTicks;
+  ulong freq;
+  ulong CC2530freq;
+  ulong systemTicks;
+  ulong TimerTicks;
+  ulong MemElapsedTime;
+  ulong MemSystemTicks;
   short int count;
   int TickINT;
   int mode;
@@ -30,7 +30,7 @@ class cl_CC2530_WDT: public cl_hw
   virtual int init(void);
   virtual void added_to_uc(void);
   virtual void write(class cl_memory_cell *cell, t_mem *val);
-  virtual double get_rtime(void);
+  virtual ulong get_rtime(void);
   virtual int tick(int cycles);
   virtual void TimerTick(int TimerTicks);
   virtual int overflow(void);

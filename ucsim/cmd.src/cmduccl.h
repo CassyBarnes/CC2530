@@ -36,6 +36,7 @@ COMMAND_ON(uc,cl_dl_cmd);
 COMMAND_ON(uc,cl_pc_cmd);
 COMMAND_ON(uc,cl_reset_cmd);
 COMMAND_ON(uc,cl_dump_cmd);
+COMMAND_ON(uc,cl_debug_dump_cmd);
 COMMAND_ANCESTOR_ON(uc,cl_di_cmd,cl_dump_cmd);
 COMMAND_ANCESTOR_ON(uc,cl_dx_cmd,cl_dump_cmd);
 COMMAND_ANCESTOR_ON(uc,cl_ds_cmd,cl_dump_cmd);

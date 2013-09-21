@@ -74,6 +74,8 @@ public:
 protected:
   class cl_uc *uc;
   //  t_addr size; //Made public by Calypso
+private:
+  void init_constructor(char *id, t_addr asize, int awidth, t_addr aoffset);
 public:
   char *addr_format, *data_format;
   int width; // in bits
@@ -82,6 +84,7 @@ public:
   //char *class_name; // used by cl_m!!
   // protected:
   t_addr dump_finished;
+  t_addr debug_dump_finished;
 public:
   cl_memory(char *id, t_addr asize, int awidth, t_addr aoffset);
   cl_memory(char *id, t_addr asize, int awidth);
@@ -105,6 +108,10 @@ public:
   virtual t_addr dump(t_addr start, t_addr stop, int bpl,
 		      class cl_console *con);
   virtual t_addr dump(class cl_console *con);
+
+  virtual t_addr debug_dump(t_addr start, t_addr stop, int bpl,
+		      class cl_console *con);
+  virtual t_addr debug_dump(class cl_console *con);
  
   virtual bool search_next(bool case_sensitive,
 			   t_mem *array, int len, t_addr *addr);
@@ -278,7 +285,8 @@ class cl_memory_chip;
 class cl_address_space: public cl_memory
 {
 protected:
-  class cl_memory_cell **cells, *dummy;
+  class cl_memory_cell *cells, *dummy;
+  void init_constructor(char *id, t_addr astart, t_addr asize, int awidth, t_addr aoffset);
 public:
   class cl_decoder_list *decoders;
   class cl_memory *sfr;
@@ -290,12 +298,17 @@ public:
   class cl_memory *flashbank1;
   class cl_memory *flashbank2;
   class cl_memory *flashbank3;
+  class cl_memory *flashbank4;
+  class cl_memory *flashbank5;
+  class cl_memory *flashbank6;
+  class cl_memory *flashbank7;
   char *asname;
 
   cl_address_space(char *id, t_addr astart, t_addr asize, int awidth, t_addr aoffset);
   cl_address_space(char *id, t_addr astart, t_addr asize, int awidth);
   virtual ~cl_address_space(void);
 
+  int IsWithinRange(class cl_memory_cell *cell);
   virtual bool is_address_space(void) { return(DD_TRUE); }
   virtual void define_memories(void);
   virtual t_mem read(t_addr addr);

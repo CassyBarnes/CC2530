@@ -19,6 +19,7 @@ cl_CC2530_timer4::cl_CC2530_timer4(class cl_uc *auc, int aid, char *aid_string):
   cl_CC2530_timer<char>(auc, aid, aid_string)
 {
   //TRACE();
+  make_partner(HW_CC2530_DMA, 1);
   addr_tl  = T4CNT;
   sfr= uc->address_space(MEM_SFR_ID);
   ChMax=2;
@@ -63,8 +64,21 @@ cl_CC2530_timer4::init(void)
   assert(cell_tl);
   cell_th = NULL;
 
-  tabCh[0]={0, 0, T4CCTL0, T4CC0, NULL, sfr->read(T4CC0)};
-  tabCh[1]={0, 0, T4CCTL1, T4CC1, NULL, sfr->read(T4CC1)};
+  //tabCh[0]={0, 0, T4CCTL0, T4CC0, NULL, sfr->read(T4CC0)};
+  tabCh[0].IOPin     = bool(0);
+  tabCh[0].ExIOPin   = bool(0);
+  tabCh[0].RegCTL    = t_addr(T4CCTL0);
+  tabCh[0].RegCMPL   = t_addr(T4CC0);
+  tabCh[0].RegCMPH   = t_addr(NULL);
+  tabCh[0].ValRegCMP = sfr->read(T4CC0);
+
+  //tabCh[1]={0, 0, T4CCTL1, T4CC1, NULL, sfr->read(T4CC1)};
+  tabCh[1].IOPin     = bool(0);
+  tabCh[1].ExIOPin   = bool(0);
+  tabCh[1].RegCTL    = t_addr(T4CCTL1);
+  tabCh[1].RegCMPL   = t_addr(T4CC1);
+  tabCh[1].RegCMPH   = t_addr(NULL);
+  tabCh[1].ValRegCMP = sfr->read(T4CC1);
 
   return(0);
 }
@@ -81,16 +95,16 @@ void
 cl_CC2530_timer4::write(class cl_memory_cell *cell, t_mem *val)
 {
   //TRACE();
-  cl_CC2530_timer::write(cell, val);
+  cl_CC2530_timer<char>::write(cell, val);
   //TRACE();
   if (cell == cell_txctl)
     {
       //TRACE();
 	TR=*val & 0x10;
-      if (*val & 0x04 == 1)
+	if ((*val & 0x04) == 1)
 	reset();
       prescale = 1 << (*val>>5);
-      freq= CC2530xtal/tickspd;
+      freq= (CC2530xtal/tickspd);
 #ifdef T4INFO
       fprintf(stderr,"Modification of %s control register.\n", id_string);
       fprintf(stderr,
@@ -133,7 +147,7 @@ cl_CC2530_timer4::CaptureCompare(void)
       if ((sfr->read(tabCh[i].RegCTL) & bmTimerMode) == 0)//capt enabled
 	{
 	  captureMode = sfr->read(tabCh[i].RegCTL) & bmCaptMode;
-	  capt = cl_CC2530_timer::Capture(tabCh[i].IOPin, tabCh[i].ExIOPin, captureMode);
+	  capt = cl_CC2530_timer<char>::Capture(tabCh[i].IOPin, tabCh[i].ExIOPin, captureMode);
 	  if (capt == true)
 	    {
 	      sfr->write(tabCh[i].RegCMPL, sfr->read(T1CNTL));//fixme
@@ -158,16 +172,18 @@ cl_CC2530_timer4::CaptureCompare(void)
 	    {
 	      ////TRACE();
 	      tabCh[i].IOPin = Compare(tabCh[i].IOPin, tabCh[i].RegCTL, tabCh[i].ValRegCMP);
-	      flagsReg = sfr->read(0x8E);
-	      flagsReg = flagsReg | (0x200 << i);
-	      sfr->write(0x8E, flagsReg);
+	      if (i == 0)
+		inform_partners(EV_T4_CH0, 0);
+	      else
+		inform_partners(EV_T4_CH1, 0);
+
 	      cc=1;
 	    }
 	}
     }
   if (cc==1)
     {
-      cl_CC2530_timer::print_info();
+      cl_CC2530_timer<char>::print_info();
     }
   get_next_cc_event();
 }
@@ -175,18 +191,18 @@ cl_CC2530_timer4::CaptureCompare(void)
 void
 cl_CC2530_timer4::TimerTick(int TimerTicks)
 {
-  TRACE();
-  //cl_CC2530_timer::tick(TimerTicks);
+  //TRACE();
+  //cl_CC2530_timer<char>::tick(TimerTicks);
   //TRACE();
 
   if (TR != 0)
     {
       switch (mode)
 	{
-	case 0: cl_CC2530_timer::do_FreeRunningMode(TimerTicks); break;
-	case 1: cl_CC2530_timer::do_DownMode(TimerTicks); break;
-	case 2: cl_CC2530_timer::do_ModuloMode(TimerTicks); break;
-	case 3: cl_CC2530_timer::do_UpDownMode(TimerTicks); break;
+	case 0: cl_CC2530_timer<char>::do_FreeRunningMode(TimerTicks); break;
+	case 1: cl_CC2530_timer<char>::do_DownMode(TimerTicks); break;
+	case 2: cl_CC2530_timer<char>::do_ModuloMode(TimerTicks); break;
+	case 3: cl_CC2530_timer<char>::do_UpDownMode(TimerTicks); break;
 	}
     }
 }
@@ -198,7 +214,7 @@ cl_CC2530_timer4::get_next_cc_event()
   for (int i=0; i<2; i++)
     {
       int valRegCTL;
-      TRACE();	
+      //      TRACE();	
       valRegCTL = (sfr->read(tabCh[i].RegCTL)) & 0x4;
       if ((valRegCTL) != 0)
 	{
@@ -210,8 +226,8 @@ cl_CC2530_timer4::get_next_cc_event()
 	    cmpEventIn = count - tabCh[i].ValRegCMP;
 	  else
 	    cmpEventIn = tabCh[i].ValRegCMP - count;
-	  if (((cmpEventIn > 0) && (cmpEventIn < NextCmpEvent)
-		   || ((NextCmpEvent == -1) && (cmpEventIn != 0))))
+	  if ( ((cmpEventIn > 0) && (cmpEventIn < NextCmpEvent))
+	       || ((NextCmpEvent == -1) && (cmpEventIn != 0)) )
 	    NextCmpEvent = cmpEventIn;
 #ifdef T4INFO
 	  fprintf(stderr, "Channel %d: Compare event in %d Timer ticks...\n", i, 

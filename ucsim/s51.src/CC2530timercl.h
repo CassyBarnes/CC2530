@@ -38,7 +38,8 @@ class cl_CC2530_timer: public cl_hw
   t_mem  mask_M1;
   t_mem  mask_TF;
   t_mem  captureMode;
-  t_addr addr_tl, addr_th;
+  t_addr addr_tl;
+  t_addr  addr_th;
   bool up_down;
   bool cc;
   bool risingEdge;
@@ -85,7 +86,7 @@ public:
   virtual int do_FreeRunningMode(int cycles);
   virtual int do_ModuloMode(int cycles);
   virtual int do_UpDownMode(int cycles);
-  virtual int do_DownMode(int cycles);
+  virtual void do_DownMode(int cycles);
   virtual void get_next_cc_event(){}
   virtual void overflow(void);
   virtual void refresh_sfr(char count);

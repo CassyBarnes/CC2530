@@ -31,63 +31,71 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 /* Address of SFR registers */
 
+ /* The following values are duplicated; to check!
+    0xa8
+    0xb7
+    0xb8
+    0xd1
+    0xd8
+    0x84 */
+
+#ifndef CC2530
 #define ACC	0xe0 /* Accumulator */
 #define B	0xf0 /* B register (scondary accumulator) */
 #define PSW	0xd0 /* Program Status Word */
+#define P3	0xb0 /* Port #3 */
+#define P2	0xa0 /* Port #2 */
+#define SBUF	0x99 /* Serial line BUFfer */
+#define SCON	0x98 /* Serial line CONtrol */
+#define DPL1	0x84 /* 2nd Data Pointer Low byte */
+#define DPH1	0x85 /* 2nd Data Pointer High byte */
+#define DPS	0x86 /* DPS 1H=DPTR is DPL1/DPH1,... */
+#define EXIF    0x91 /* */
+#define IPH0	0xb7 /* */
+#define IPL0	0xb8 /* */
+#define MCON    0xc6 /* */
+#define T2CON	0xc8 /* Timer #2 CONtrol */
+#endif
+
 #define SP	0x81 /* Stack Pointer */
 #define DPL	0x82 /* Data Pointer Low byte */
 #define DPH	0x83 /* Data Pointer High byte */
 #define DPL1	0x84 /* 2nd Data Pointer Low byte */
 #define DPH1	0x85 /* 2nd Data Pointer High byte */
-#define DPS	0x86 /* DPS 1H=DPTR is DPL1/DPH1, 2H=AUTO DPTR INCR */
 #define P0	0x80 /* Port #0 */
 #define P1	0x90 /* Port #1 */
-#define P2	0xa0 /* Port #2 */
-#define P3	0xb0 /* Port #3 */
 #define IP	0xb8 /* Intrrupt Priority */
 #define IE	0xa8 /* Interrupt Enable */
 #define TMOD	0x89 /* Timer MODe */
 #define TCON	0x88 /* Timer CONtrol */
-#define T2CON	0xc8 /* Timer #2 CONtrol */
 #define TH0	0x8c /* Timer #0 High byte */
 #define TL0	0x8a /* Timer #0 Low byte */
 #define TH1	0x8d /* Timer #1 High byte */
 #define TL1	0x8b /* Timer #1 Low byte */
-#define SCON	0x98 /* Serial line CONtrol */
 #define TH2	0xcd /* Timer #2 High byte */
 #define TL2	0xcc /* Timer #2 Low byte */
 #define RCAP2H	0xcb /* Capture Register of Timer #2 High byte */
 #define RCAP2L	0xca /* Capture Register of Timer #2 Low byte */
-#define SBUF	0x99 /* Serial line BUFfer */
 #define PCON	0x87 /* Power CONtrol */
-
 #define AUXR	0x8e /* Auxiliary Register */
 #define AUXR1	0xa2 /* Secondary Aux Register */
-
-#define P4      0x80
+#define P4      0x80 // ERROR: Same value as P0 ?
 #define DPXL	0x84 /* */
-#define DPL1	0x84 /* 2nd Data Pointer Low byte */
-#define DPH1	0x85 /* 2nd Data Pointer High byte */
-#define DPS	0x86 /* DPS 1H=DPTR is DPL1/DPH1,... */
-#define EXIF    0x91 /* */
 #define P4CNT   0x92 /* */
 #define DPX     0x93 /* Data Pointer HHigh byte */
 #define DPX1    0x95 /* Data Pointer HHigh byte */
 #define ESP     0x9b /* Extended Stack Pointer */
 #define ACON    0x9d /* */
 #define P5      0xa1
-#define P5CNT   0xa2 /* */
+#define P5CNT   0xa2 /* ERROR: same value as AUXR1 */
 #define C0C     0xa3 /* */
 #define WDTRST	0xa6 /* */
 #define IE0	0xa8 /* */
 #define SADDR	0xa9 /* */
-#define IPH0	0xb7 /* */
 #define IPH	0xb7
-#define IPL0	0xb8 /* */
 #define SADEN	0xb9 /* */
 #define SPH	0xbd /* */
 #define PMR	0xc4 /* */
-#define MCON    0xc6 /* */
 #define TA      0xc7 /* */
 #define T2MOD	0xc9 /* */
 #define COR     0xce /* */

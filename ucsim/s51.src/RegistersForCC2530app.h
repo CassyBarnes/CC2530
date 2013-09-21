@@ -10,9 +10,9 @@
 //#define DPL 	0X83
 //#define DPL1	0X84
 //#define DPH1	0X85
-#define U0CSR	0X86
-#define PCON	0X87
-#define TCON	0X88
+#define U0CSR	0X86 // redefines DPS
+//#define PCON	0X87
+//#define TCON	0X88
 #define P0IFG	0X89
 #define P1IFG	0X8A
 #define P2IFG	0X8B
@@ -20,7 +20,7 @@
 #define P1IEN	0X8D
 #define ZERO	0X8E
 #define P0INP	0X8F
-#define P1	0X90
+//#define P1	0X90
 #define RFIRQF1	0X91
 #define DPS	0X92
 #define MPAGE	0X93

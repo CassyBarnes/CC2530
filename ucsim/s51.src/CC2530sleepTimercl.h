@@ -19,7 +19,11 @@ protected:
   int  tickspd;
   bool captureEnabled;
   char *powerMode;
-  double ticks, freq, systemTicks, MemElapsedTime, MemSystemTicks;
+  ulong ticks;
+  ulong freq;
+  ulong systemTicks;
+  ulong MemElapsedTime;
+  ulong MemSystemTicks;
   struct port tabPORT[3];
   class cl_address_space *sfr;
 
@@ -28,7 +32,7 @@ public:
   virtual int init(void);
   virtual void added_to_uc(void);
   virtual void reset(void);
-  virtual double get_rtime(void);
+  virtual ulong get_rtime(void);
   virtual void write(class cl_memory_cell *cell, t_mem *val);
   virtual int tick(int cycles);
   virtual int STtick(int cycles);

@@ -72,6 +72,12 @@ fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
 cl_memory::cl_memory(char *id, t_addr asize, int awidth, t_addr aoffset):
   cl_base()
 {
+  init_constructor(id, asize, awidth, aoffset);
+}
+
+void
+cl_memory::init_constructor(char *id, t_addr asize, int awidth, t_addr aoffset)
+{
   size= asize;
   xram_offset= aoffset;
   set_name(id);
@@ -85,13 +91,7 @@ cl_memory::cl_memory(char *id, t_addr asize, int awidth, t_addr aoffset):
 cl_memory::cl_memory(char *id, t_addr asize, int awidth):
   cl_base()
 {
-  size= asize;
-  xram_offset=0;
-  set_name(id);
-  addr_format= data_format= 0;
-  width= awidth;
-  start_address= 0;
-  uc= 0;
+  init_constructor(id, asize, awidth, 0);
   //fprintf(stderr, "Initializing memory %s size 0x%02x offset 0x%02x width 0x%02x\n", this->name, size, xram_offset, width);
 }
 
@@ -124,6 +124,7 @@ cl_memory::init(void)
       data_mask|= 1;
     }
   dump_finished= start_address;
+  debug_dump_finished= start_address;
   return(0);
 }
 
@@ -215,9 +216,14 @@ cl_memory::dump(t_addr start, t_addr stop, int bpl, class cl_console *con)
 	     (start+i <= stop);
 	   i++)
 	{
-	  //fprintf(stderr, "Dump 0x%02x\n", get(start+i));
-	  //	  con->dd_printf(data_format, get(start+i)); con->dd_printf(" ");
-	  con->dd_printf(data_format, read(start+i)); con->dd_printf(" ");
+	  /*	  if ((start + i) == 0xC1)
+	    {
+	      fprintf(stderr, "Dump 0x%02x 0x%02x\n", get(start+i), read(start+i));
+	      if ((read(start+i)) != 0)
+		assert(false);
+		}*/
+	  con->dd_printf(data_format, get(start+i)); con->dd_printf(" ");
+
 	}
       while (i < bpl)
 	{
@@ -257,6 +263,73 @@ cl_memory::dump(class cl_console *con)
 {
   return(dump(dump_finished, dump_finished+10*8-1, 8, con));
 }
+
+
+t_addr
+cl_memory::debug_dump(t_addr start, t_addr stop, int bpl, class cl_console *con)
+{
+  //fprintf(stderr,"About to dump %s, from @ 0x%04x to 0x%04x\n",
+  //	    this->name, start, stop); 
+  int i;
+  t_addr lva= lowest_valid_address();
+  t_addr hva= highest_valid_address();
+  if (start < lva)
+    start= lva;
+  if (stop > hva)
+    stop= hva;
+  while ((start <= stop) &&
+	 (start < hva))
+    {
+      con->dd_printf(addr_format, start); con->dd_printf(" ");
+      for (i= 0;
+	   (i < bpl) &&
+	     (start+i < hva) &&
+	     (start+i <= stop);
+	   i++)
+	{
+	  //fprintf(stderr, "Dump 0x%02x\n", get(start+i));
+	  //	  con->dd_printf(data_format, get(start+i)); con->dd_printf(" ");
+	  con->dd_printf(data_format, read(start+i)); con->dd_printf(" ");
+	}
+      while (i < bpl)
+	{
+	  int j;
+	  j= width/4 + ((width%4)?1:0) + 1;
+	  while (j)
+	    {
+	      con->dd_printf(" ");
+	      j--;
+	    }
+	  i++;
+	}
+      /*      for (i= 0; (i < bpl) &&
+	     (start+i < hva) &&
+	     (start+i <= stop);
+	   i++)
+	{
+	  long c= read(start+i);
+	  con->dd_printf("%c", isprint(255&c)?(255&c):'.');
+	  if (width > 8)
+	    con->dd_printf("%c", isprint(255&(c>>8))?(255&(c>>8)):'.');
+	  if (width > 16)
+	    con->dd_printf("%c", isprint(255&(c>>16))?(255&(c>>16)):'.');
+	  if (width > 24)
+	    con->dd_printf("%c", isprint(255&(c>>24))?(255&(c>>24)):'.');
+	    }*/
+      con->dd_printf("\n");
+      debug_dump_finished= start+i;
+      start+= bpl;
+    }
+
+  return(debug_dump_finished);
+}
+
+t_addr
+cl_memory::debug_dump(class cl_console *con)
+{
+  return(debug_dump(debug_dump_finished, debug_dump_finished+10*8-1, 8, con));
+}
+
 
 bool
 cl_memory::search_next(bool case_sensitive,
@@ -377,7 +450,28 @@ cl_hw_operator::read(void)
 
   if (hw)
     {
+#if 0 // for debug  - remove me
+      if (hw && (
+	     hw->cathegory == HW_CC2530_RADIO             ||
+	     hw->cathegory == HW_CC2530_USART             ||
+	     hw->cathegory == HW_CC2530_DMA               ||
+	     hw->cathegory == HW_CC2530_FLASH_CONTROLLER  ||
+	     hw->cathegory == HW_MAC_TIMER             ))
+    fprintf(stderr, "%s:%d in %s(): hw.cathegory == %d\n",
+	    __FILE__,
+	    __LINE__,
+	    __FUNCTION__,
+	    hw->cathegory);
+#endif
       d= hw->read(cell);
+#if 0 // for debug  - remove me
+      if (hw->cathegory == HW_CC2530_RADIO             ||
+      hw->cathegory == HW_CC2530_USART             ||
+      hw->cathegory == HW_CC2530_DMA               ||
+      hw->cathegory == HW_CC2530_FLASH_CONTROLLER  ||
+      hw->cathegory == HW_MAC_TIMER             )*/
+    fprintf(stderr, "HW returned %d (%x)\n", d, d);
+#endif
     }
 
   if (next_operator)
@@ -470,7 +564,7 @@ cl_memory_cell::cl_memory_cell(void):
   flags= CELL_NON_DECODED;
   width= 8;
   *data= 0;
-
+  operators = 0;
 #ifdef STATISTIC
   nuof_writes= nuof_reads= 0;
 #endif
@@ -647,6 +741,7 @@ cl_memory_cell::append_operator(class cl_memory_operator *op)
 	  n= o->get_next();
 	}
       o->set_next(op);
+
     }
 }
 
@@ -737,43 +832,36 @@ cl_address_space::cl_address_space(char *id, t_addr astart, t_addr asize,
 				   int awidth, t_addr aoffset):
   cl_memory(id, asize, awidth, aoffset)
 {
-  start_address= astart;
-  decoders= new cl_decoder_list(2, 2, DD_FALSE);
-  cells= (class cl_memory_cell **)malloc(size * sizeof(class cl_memory_cell*));
-  int i;
-  for (i= 0; i < size; i++)
-    {
-      cells[i]= new cl_memory_cell();
-      cells[i]->init();
-    }
-  //  fprintf(stderr,"Created memory ID: %s\n", this->name);
-  dummy= new cl_dummy_cell();
+  init_constructor(id, astart, asize, awidth, aoffset);
 }
 
 cl_address_space::cl_address_space(char *id, t_addr astart, t_addr asize, 
 				   int awidth):
   cl_memory(id, asize, awidth)
 {
+  init_constructor(id, astart, asize, awidth, 0);
+}
+
+void
+cl_address_space::init_constructor(char *id, t_addr astart, t_addr asize, int awidth,
+				   t_addr aoff)
+{
   start_address= astart;
   decoders= new cl_decoder_list(2, 2, DD_FALSE);
-  cells= (class cl_memory_cell **)malloc(size * sizeof(class cl_memory_cell*));
+  //cells= (class cl_memory_cell *)malloc(size * sizeof(class cl_memory_cell));
+  cells = new cl_memory_cell[size];
   int i;
   for (i= 0; i < size; i++)
     {
-      cells[i]= new cl_memory_cell();
-      cells[i]->init();
+      cells[i].init();
     }
-  //fprintf(stderr,"Created address space ID: %s\n", this->name);
+  //  fprintf(stderr,"Created memory ID: %s\n", this->name);
   dummy= new cl_dummy_cell();
 }
 
 cl_address_space::~cl_address_space(void)
 {
   delete decoders;
-  int i;
-  for (i= 0; i < size; i++)
-    if (cells[i])
-      delete cells[i];
   delete dummy;
 }
 
@@ -789,9 +877,23 @@ cl_address_space::define_memories(void)
   flashbank1 = uc->memory("flashbank1");
   flashbank2 = uc->memory("flashbank2");
   flashbank3 = uc->memory("flashbank3");
+  flashbank4 = uc->memory("flashbank4");
+  flashbank5 = uc->memory("flashbank5");
+  flashbank6 = uc->memory("flashbank6");
+  flashbank7 = uc->memory("flashbank7");
   asname = get_name();
 }
 
+int
+cl_address_space::IsWithinRange(class cl_memory_cell *cell)
+{
+  int diff = (int)(cell - cells);
+  fprintf(stderr, "Address of cell is 0x%04x.\n", diff);
+  if ((diff >= 0x6100) && (diff <= 0x615F))
+    return(diff);
+  else
+    return(0);
+}
   
 t_mem
 cl_address_space::read(t_addr addr)
@@ -801,7 +903,7 @@ cl_address_space::read(t_addr addr)
   if (asname == rom->get_name()){
 
     if (idx < 0x8000)
-      return flashbank0->read(idx);
+      return (flashbank0->read(idx));
     
     {
       int execFromSram = sfr->read(MCON) & 0x08;
@@ -826,9 +928,21 @@ cl_address_space::read(t_addr addr)
 	  case 3:
 	    return(flashbank3->read(idx));
 	    break;
+	  case 4:
+	    return(flashbank4->read(idx));
+	    break;
+	  case 5:
+	    return(flashbank5->read(idx));
+	    break;
+	  case 6:
+	    return (flashbank6->read(idx));
+	    break;
+	  case 7:
+	    return(flashbank7->read(idx));
+	    break;
 	  default:
 	    assert(!"Invalid fmap value.");
-	    break; // return(cells[idx]->read());
+	    break;
 	  }
       }	  
     }
@@ -852,20 +966,28 @@ cl_address_space::read(t_addr addr)
 	      return(flashbank2->read(idx));
 	    case 3:
 	      return(flashbank3->read(idx));
+	    case 4:
+	      return(flashbank4->read(idx));
+	    case 5:
+	      return(flashbank5->read(idx));
+	    case 6:
+	      return(flashbank6->read(idx));
+	    case 7:
+	      return(flashbank7->read(idx));
 	    default:
 	      fprintf(stderr, "Invalid mcon value.\n");
-	      return(cells[idx]->read());
+	      return(cells[idx].read());
 	    }
       }
       else
-	return(cells[idx]->read());
+	return(cells[idx].read());
     }
   else if (asname == sram->get_name())
     {
       if (idx >= 0x1F00)
 	return(iram->read(idx - iram->xram_offset));
       else
-	return(cells[idx]->read());
+	return(cells[idx].read());
     }
 
   else if (idx >= size ||
@@ -877,7 +999,13 @@ cl_address_space::read(t_addr addr)
       return(dummy->read());
     }
   else
-    return(cells[idx]->read());
+    {
+      if ((idx == 0xC1))
+	fprintf(stderr, "idx C1 recognized");
+      /*if ((idx == 0xC1) && (cells[idx].read() != 0))
+	assert(false);*/
+      return(cells[idx].read());
+    }
 }
 
 t_mem
@@ -894,7 +1022,7 @@ cl_address_space::read(t_addr addr, enum hw_cath skip)
       err_inv_addr(addr);
       return(dummy->read());
     }
-  return(cells[idx]->read(skip));
+  return(cells[idx].read(skip));
 }
 
 t_mem
@@ -923,9 +1051,17 @@ cl_address_space::get(t_addr addr)
 	      return(flashbank2->get(idx));
 	    case 3:
 	      return(flashbank3->get(idx));
+	    case 4:
+	      return(flashbank4->get(idx));
+	    case 5:
+	      return(flashbank5->get(idx));
+	    case 6:
+	      return(flashbank6->get(idx));
+	    case 7:
+	      return(flashbank7->get(idx));
 	    default:
 	      fprintf(stderr, "Invalid fmap value.\n");
-	      return(cells[idx]->get());
+	      return(cells[idx].get());
 	    }
 	}
     }
@@ -949,20 +1085,28 @@ cl_address_space::get(t_addr addr)
 	    return(flashbank2->get(idx));
 	  case 3:
 	    return(flashbank3->get(idx));
+	  case 4:
+	    return(flashbank4->get(idx));
+	  case 5:
+	    return(flashbank5->get(idx));
+	  case 6:
+	    return(flashbank6->get(idx));
+	  case 7:
+	    return(flashbank7->get(idx));
 	  default:
 	    fprintf(stderr, "Invalid mcon value.\n");
-	    return(cells[idx]->get());
+	    return(cells[idx].get());
 	  }
       }
       else
-	return(cells[idx]->get());
+	return(cells[idx].get());
     }
   else if (asname == sram->get_name())
     {
       if (idx >= 0x1F00)
 	return(iram->get(idx - iram->xram_offset));
       else
-	return(cells[idx]->get());
+	return(cells[idx].get());
     }
   else {
     if (idx >= size ||
@@ -972,7 +1116,7 @@ cl_address_space::get(t_addr addr)
 	err_inv_addr(addr);
 	return(dummy->get());
       }
-    return(cells[idx]->get());
+    return(cells[idx].get());
   }
 }
 
@@ -1008,22 +1152,30 @@ cl_address_space::write(t_addr addr, t_mem val)
 	    return(flashbank2->write(idx, val));
 	  case 3:
 	    return(flashbank3->write(idx, val));
+	  case 4:
+	    return(flashbank4->write(idx, val));
+	  case 5:
+	    return(flashbank5->write(idx, val));
+	  case 6:
+	    return(flashbank6->write(idx, val));
+	  case 7:
+	    return(flashbank7->write(idx, val));
 	  default:
 	    fprintf(stderr, "Invalid mcon value.\n");
-	    return(cells[idx]->write(val));
+	    return(cells[idx].write(val));
 	  }
       }
       else
-	return(cells[idx]->write(val));
+	return(cells[idx].write(val));
     }
   else if (asname == sram->get_name())
     {
       if (idx >= 0x1F00)
 	return(iram->write(idx - iram->xram_offset, val));
       else
-	return(cells[idx]->write(val));
+	return(cells[idx].write(val));
     }
-  return(cells[idx]->write(val));
+  return(cells[idx].write(val));
 }
 
 void
@@ -1059,23 +1211,31 @@ cl_address_space::set(t_addr addr, t_mem val)
 	    flashbank2->set(idx, val);
 	  case 3:
 	    flashbank3->set(idx, val);
+	  case 4:
+	    flashbank4->set(idx, val);
+	  case 5:
+	    flashbank5->set(idx, val);
+	  case 6:
+	    flashbank6->set(idx, val);
+	  case 7:
+	    flashbank7->set(idx, val);
 	  default:
 	    fprintf(stderr, "Invalid mcon value.\n");
-	    cells[idx]->set(val);
+	    cells[idx].set(val);
 	  }
       }
       else
-	cells[idx]->set(val);
+	cells[idx].set(val);
     }
   else if (asname == sram->get_name())
     {
       if (idx >= 0x1F00)
 	iram->set(idx - iram->xram_offset, val);
       else
-	cells[idx]->set(val);
+	cells[idx].set(val);
     }
   else
-    cells[idx]->set(val);
+    cells[idx].set(val);
 }
 
 t_mem
@@ -1089,7 +1249,7 @@ cl_address_space::wadd(t_addr addr, long what)
       TRACE();
       err_inv_addr(addr);
     }
-  return(cells[idx]->wadd(what));
+  return(cells[idx].wadd(what));
 }
 
 /* Set or clear bits, without callbacks */
@@ -1101,7 +1261,7 @@ cl_address_space::set_bit1(t_addr addr, t_mem bits)
   if (idx >= size ||
       addr < start_address)
     return;
-  class cl_memory_cell *cell= cells[idx];
+  class cl_memory_cell *cell= cells + idx;
   cell->set_bit1(bits);
 }
 
@@ -1112,7 +1272,7 @@ cl_address_space::set_bit0(t_addr addr, t_mem bits)
   if (idx >= size ||
       addr < start_address)
     return;
-  class cl_memory_cell *cell= cells[idx];
+  class cl_memory_cell *cell= cells + idx;
   cell->set_bit0(bits);
 }
 
@@ -1131,7 +1291,7 @@ cl_address_space::get_cell(t_addr addr)
       err_inv_addr(addr);
       return(dummy);
     }
-  return(cells[idx]);
+  return(cells + idx);
 }
 
 
@@ -1144,7 +1304,7 @@ cl_address_space::get_cell_flag(t_addr addr)
     {
       return(dummy->get_flags());
     }
-  return(cells[addr]->get_flags());
+  return(cells[addr].get_flags());
 }
 
 bool
@@ -1156,7 +1316,7 @@ cl_address_space::get_cell_flag(t_addr addr, enum cell_flag flag)
     {
       return(dummy->get_flag(flag));
     }
-  return(cells[addr]->get_flag(flag));
+  return(cells[addr].get_flag(flag));
 }
 
 void
@@ -1171,7 +1331,7 @@ cl_address_space::set_cell_flag(t_addr addr, bool set_to, enum cell_flag flag)
       cell= dummy;
     }
   else
-    cell= cells[addr];
+    cell= cells + addr;
   cell->set_flag(flag, set_to);
 }
 
@@ -1184,7 +1344,7 @@ cl_address_space::decode_cell(t_addr addr,
   if (idx >= size ||
       addr < start_address)
     return(DD_FALSE);
-  class cl_memory_cell *cell= cells[idx];
+  class cl_memory_cell *cell= cells + idx;
 
   if (!cell->get_flag(CELL_NON_DECODED))
     {
@@ -1203,7 +1363,7 @@ cl_address_space::undecode_cell(t_addr addr)
   if (idx >= size ||
       addr < start_address)
     return;
-  class cl_memory_cell *cell= cells[idx];
+  class cl_memory_cell *cell= cells + idx;
 
   cell->un_decode();
 }
@@ -1283,7 +1443,7 @@ cl_address_space::register_hw(t_addr addr, class cl_hw *hw,
   if (idx >= size ||
       addr < start_address)
     return(0);
-  class cl_memory_cell *cell= cells[idx];
+  class cl_memory_cell *cell= cells + idx;
   cell->add_hw(hw, ith, addr);
   /*fprintf(stderr, "adding hw %s to cell 0x%x(%d) of %s\n", hw->id_string, addr, idx, get_name("as"));*/
   if (announce)
@@ -1299,17 +1459,17 @@ cl_address_space::set_brk(t_addr addr, class cl_brk *brk)
   if (idx >= size ||
       addr < start_address)
     return;
-  class cl_memory_cell *cell= cells[idx];
+  class cl_memory_cell *cell= cells + idx;
   class cl_memory_operator *op;
 
   switch (brk->get_event()) //Modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: case brkWSRAM:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3:case brkWFLASHBANK4: case brkWFLASHBANK5: case brkWFLASHBANK6: case brkWFLASHBANK7: case brkWSRAM:
       //e= 'W';
       op= new cl_write_operator(cell, addr, cell->get_data(), cell->get_mask(),
 				uc, brk);
       break;
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: case brkRSRAM:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: case brkRFLASHBANK4: case brkRFLASHBANK5: case brkRFLASHBANK6: case brkRFLASHBANK7: case brkRSRAM:
       //e= 'R';
       op= new cl_read_operator(cell, addr, cell->get_data(), cell->get_mask(),
 			       uc, brk);
@@ -1334,12 +1494,12 @@ cl_address_space::del_brk(t_addr addr, class cl_brk *brk)
   if (idx >= size ||
       addr < start_address)
     return;
-  class cl_memory_cell *cell= cells[idx];
+  class cl_memory_cell *cell= cells + idx;
 
   switch (brk->get_event()) //modified by Calypso for cc2530
     {
-    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3: case brkWSRAM:
-    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: case brkRSRAM:
+    case brkWRITE: case brkWXRAM: case brkWIRAM: case brkWSFR: case brkWFLASHBANK0: case brkWFLASHBANK1: case brkWFLASHBANK2: case brkWFLASHBANK3:  case brkWFLASHBANK4: case brkWFLASHBANK5: case brkWFLASHBANK6: case brkWFLASHBANK7: case brkWSRAM:
+    case brkREAD: case brkRXRAM: case brkRCODE: case brkRIRAM: case brkRSFR: case brkRFLASHBANK0: case brkRFLASHBANK1: case brkRFLASHBANK2: case brkRFLASHBANK3: case brkRFLASHBANK4: case brkRFLASHBANK5: case brkRFLASHBANK6: case brkRFLASHBANK7: case brkRSRAM:
       cell->del_operator(brk);
       break;
     case brkNONE:

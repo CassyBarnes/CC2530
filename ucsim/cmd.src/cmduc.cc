@@ -250,6 +250,7 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
 
   if (cmdline->syntax_match(uc, MEMORY)) {
     d_start= mem->dump_finished;
+    //fprintf(stderr, "mem->dump_finished is 0x%02x\n",mem->dump_finished);
     d_end  = d_start+10*8-1;
   } else if (cmdline->syntax_match(uc, MEMORY ADDRESS)) {
     d_start= params[1]->value.address;
@@ -337,8 +338,9 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
 	  xram->dump(r_start, r_end, bpl, con);
 	  fprintf(stderr,"\n*******End of %s section of xram.*******\n\n",
 		  tab[i]->name);
-	  //xram->dump(r_end, d_end, bpl, con);
+
 	  d_start = r_end;
+	  xram->dump(r_end, d_end, bpl, con);
 	}
 	else if ((d_end >= r_end) && (d_start >= r_start) && (d_start <= r_end)) {
 	  fprintf(stderr,"Dump of xram (including end of %s).\n", tab[i]->name);
@@ -347,6 +349,7 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
 		  tab[i]->name); 
  	  //xram->dump(r_end, d_end, bpl, con);
 	  d_start = r_end;
+	  xram->dump(r_end, d_end, bpl, con);
 	}
       }
       else {
@@ -373,6 +376,219 @@ COMMAND_DO_WORK_UC(cl_dump_cmd)
   }
   return(DD_FALSE);
 }
+
+
+/*
+ * Command: debug_dump
+ *----------------------------------------------------------------------------
+ */
+
+//int
+//cl_dump_cmd::do_work(class cl_sim *sim,
+//		     class cl_cmdline *cmdline, class cl_console *con)
+COMMAND_DO_WORK_UC(cl_debug_dump_cmd)
+{
+  class cl_memory *mem = NULL;
+  class cl_cmd_arg *params[4]= { cmdline->param(0),
+				 cmdline->param(1),
+				 cmdline->param(2),
+				 cmdline->param(3) };
+
+  // 1. Dumping registers that should be broken down into identified bits:
+  if (params[0] &&
+      params[0]->as_bit(uc))
+    {
+      int i= 0;
+      while (params[0] &&
+	     params[0]->as_bit(uc))
+	{
+	  t_mem m;
+	  mem= params[0]->value.bit.mem;
+	  m= mem->read(params[0]->value.bit.mem_address);
+	  char *sn=
+	    uc->symbolic_bit_name((t_addr)-1,
+				  mem,
+				  params[0]->value.bit.mem_address,
+				  params[0]->value.bit.mask);
+	  con->dd_printf("%10s ", sn?sn:"");
+	  con->dd_printf(mem->addr_format, params[0]->value.bit.mem_address);
+	  con->dd_printf(" ");
+	  con->dd_printf(mem->data_format, m);
+	  con->dd_printf(" %c\n", (m&(params[0]->value.bit.mask))?'1':'0');
+	  i++;
+	  params[0]= cmdline->param(i);
+	}
+      if (params[0])
+	con->dd_printf("%s\n", short_help?short_help:"Error: wrong syntax\n");
+
+      return(DD_FALSE);
+    }
+
+
+  // 2. Error message if no parameter or if parameter is not of type 'memory':
+  if (!params[0] ||
+      !params[0]->as_memory(uc))
+    {
+      con->dd_printf("No memory specified. Use \"info memory\" for available memories\n");
+      return(DD_FALSE);
+    }
+
+
+
+  // 3. Dump a memory:
+
+  // 3.0 Debug message
+  /*  {
+    string fname;
+    fname = cmdline->param(0)->get_svalue();
+    fprintf(stderr, "memory: %s\n", fname.c_str());
+    }*/
+
+  // 3.1 Define the interval to print, depending on arguments of dump command:
+  t_addr d_start = 0;
+  t_addr d_end   = 0;
+  long   bpl   = 8;
+  mem  = params[0]->value.memory.memory;
+
+  if (cmdline->syntax_match(uc, MEMORY)) {
+    d_start= mem->debug_dump_finished;
+    //fprintf(stderr, "mem->debug_dump_finished is 0x%02x\n",mem->debug_dump_finished);
+    d_end  = d_start+10*8-1;
+  } else if (cmdline->syntax_match(uc, MEMORY ADDRESS)) {
+    d_start= params[1]->value.address;
+    d_end  = d_start+10*8-1;
+  } else if (cmdline->syntax_match(uc, MEMORY ADDRESS ADDRESS)) {
+    d_start= params[1]->value.address;
+    d_end  = params[2]->value.address;
+  } else if (cmdline->syntax_match(uc, MEMORY ADDRESS ADDRESS NUMBER)) {
+    d_start= params[1]->value.address;
+    d_end  = params[2]->value.address;
+    bpl  = params[3]->value.number;	
+  }
+  else {
+    con->dd_printf("%s\n", short_help?short_help:"Error: wrong syntax\n");
+    return(DD_FALSE);
+  }
+
+  class cl_memory *xram = uc->memory("xram");
+  class cl_memory *rom = uc->memory("rom");
+  class cl_memory *sfr = uc->memory("sfr");
+
+  if (mem == xram) {
+    int i;
+    int tab_size;
+    int count_no_intersect = 0;
+
+    class cl_memory * tab[4];
+    tab[0] = uc->memory("sfr");
+    tab[1] = uc->memory("sram");
+    tab[2] = uc->memory("iram");
+
+    tab_size=(sizeof tab)/(sizeof(cl_memory *));
+
+    int memctr = sfr->read(MCON) & 0x07;
+    switch (memctr)
+      {
+      case 0:
+	tab[3]= uc->memory("flashbank0");
+	break;
+      case 1:
+	tab[3]= uc->memory("flashbank1");
+	break;
+      case 2:
+	tab[3]= uc->memory("flashbank2");
+	break;
+      case 3:
+	tab[3]= uc->memory("flashbank3");
+	break;
+      case 4:
+	tab[3]= uc->memory("flashbank4");
+	break;
+      case 5:
+	tab[3]= uc->memory("flashbank5");
+	break;
+      case 6:
+	tab[3]= uc->memory("flashbank6");
+	break;
+      case 7:
+	tab[3]= uc->memory("flashbank7");
+	break;
+      default:
+	tab[3]= uc->memory("flashbank0");
+	break;
+      }
+    fprintf(stderr,"The flashbank mapped to xram is %s.\n", tab[3]->name);
+ 
+    for (i=0; i<tab_size; i++){
+
+      // 1. Check whether there is an intersection with flash, sfr, iram (=data):
+      t_addr r_start = tab[i]->xram_offset + tab[i]->start_address;
+      t_addr r_end   = tab[i]->xram_offset + tab[i]->start_address + tab[i]->size;
+ 
+
+      //fprintf(stderr,"Case of %s, start 0x%02x, end 0x%02x, offset 0x%02x\n",
+      //	      tab[i]->name, r_start, r_end, tab[i]->xram_offset);
+      if (i==1) 
+	r_end = r_end - 0x100;//sram case (sram_end-100 is beginning of iram)
+
+      if (has_intersection(d_start, d_end, r_start, r_end)) {
+	if ((d_start <= r_start) && (d_end >= r_start) && (d_end <= r_end)) {
+	  fprintf(stderr,"Dump of xram (including beginning of %s).\n", tab[i]->name);
+	  xram->debug_dump(d_start, r_start-1, bpl, con);
+	  fprintf(stderr,"\n*******Beginning of %s section of xram.*******\n\n",
+		  tab[i]->name);
+	  xram->debug_dump(r_start, d_end, bpl, con);
+	}
+	else if ((d_end >= r_start) && (d_end <= r_end) && 
+		 (d_start >= r_start) && (d_start <= r_end)) {
+	  fprintf(stderr,"Dumping part of %s section of xram.\n", tab[i]->name); 
+	  xram->debug_dump(d_start, d_end, bpl, con);
+	}
+	else if ((d_end >= r_end) && (d_start <= r_start)) {
+	  fprintf(stderr,"Dump of xram (including the %s section).\n", tab[i]->name);
+	  xram->debug_dump(d_start, r_start-1, bpl, con);
+	  fprintf(stderr,"\n*******Beginning of %s section of xram.*******\n\n",
+		  tab[i]->name);
+	  xram->debug_dump(r_start, r_end, bpl, con);
+	  fprintf(stderr,"\n*******End of %s section of xram.*******\n\n",
+		  tab[i]->name);
+	  //xram->debug_dump(r_end, d_end, bpl, con);
+	  d_start = r_end;
+	}
+	else if ((d_end >= r_end) && (d_start >= r_start) && (d_start <= r_end)) {
+	  fprintf(stderr,"Dump of xram (including end of %s).\n", tab[i]->name);
+	  xram->debug_dump(d_start, r_end - 1, bpl, con);
+	  fprintf(stderr,"\n*******End of %s section of xram.*******\n\n",
+		  tab[i]->name); 
+ 	  //xram->debug_dump(r_end, d_end, bpl, con);
+	  d_start = r_end;
+	}
+      }
+      else {
+	//used for case where there has been no intersection 
+	//of dump section with any specific parts of the xram
+	count_no_intersect++;
+      }
+    }
+    if (count_no_intersect == tab_size){
+      mem->debug_dump(d_start, d_end, bpl, con);
+    }
+  }
+  else if(mem == rom){
+    int fmap = sfr->read(FMAP) & 0x07;
+    fprintf(stderr,"The flashbank mapped to the upper part of rom is flashbank%d\n",
+	    fmap); 
+    mem->debug_dump(d_start, d_end, bpl, con);    
+  }
+  else {
+    //fprintf(stderr,"About to dump %s, from @ 0x%04x to 0x%04x\n",
+    // mem->name, d_start, d_end); 
+    mem->debug_dump(d_start, d_end, bpl, con);
+
+  }
+  return(DD_FALSE);
+}
+
 
 
 /*

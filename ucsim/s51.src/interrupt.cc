@@ -301,6 +301,7 @@ cl_radio::init(void)
   return(0);
 }
 
+#ifdef OOO
 void
 cl_radio::added_to_uc(void)
 {
@@ -978,6 +979,8 @@ cl_radio::read(class cl_memory_cell *cell)
 #endif
   return (cell->get());
 }
+
+#endif
 
 
 /*void

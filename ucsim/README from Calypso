@@ -1,0 +1,9 @@
+If you want to run Ucsim for CC2530 simulation :
+
+ - run the command ./configure in the ucsim directory
+(if you don't have permission, you can run the command "chmod -R ugo+rxw /ucsim" in Ucsim's parent directory.)
+
+ - run the comman "make all" in ucsim's directory.
+
+ - go to s51.src directory, then you can run the simulator with a test program by using the following command:
+   "./s51 ../cc2530test1.hex"

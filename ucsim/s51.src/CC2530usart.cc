@@ -5,6 +5,7 @@
 #include "regs51.h"
 #include "types51.h"
 
+#undef USARTINFO
 #ifdef USARTINFO
 #define DEBUG
 #endif
@@ -18,6 +19,7 @@ fprintf(stderr, "%s:%d in %s()\n", __FILE__, __LINE__, __FUNCTION__)
 cl_CC2530_usart::cl_CC2530_usart(class cl_uc *auc, int aid, char *aid_string):
   cl_hw(auc, HW_CC2530_USART, aid, aid_string)
 {
+  make_partner(HW_CC2530_DMA, 1);
   UsartID = aid;
   if (UsartID == 0)
     {
@@ -57,6 +59,7 @@ int
 cl_CC2530_usart::init(void)
 {
   sfr= uc->address_space(MEM_SFR_ID);
+  bitRxCnt = 0;
   if (UsartID == 0)
     {
       register_cell(sfr, U0CSR, &cell_uXcsr, wtd_restore_write);
@@ -75,11 +78,7 @@ cl_CC2530_usart::init(void)
     }
   register_cell(sfr, TCON, &cell_tcon, wtd_restore_write);
   register_cell(sfr, IRCON2, &cell_ircon2, wtd_restore_write);
-  stopBitLevel = 1;
-  startBitLevel = 0;
-  TXD = stopBitLevel;
-  RXD = stopBitLevel;
-  BaudFactor = 1.0/16;
+
   testTab[0]=0;
   testTab[1]=1;
   testTab[2]=0;
@@ -91,6 +90,37 @@ cl_CC2530_usart::init(void)
   testTab[8]=0;
   testTab[9]=1;
   testTab[10]=1;//0:start bit, 10101010:data, 1:Parity, 1:Stop
+
+  reset();
+
+  return(0);
+}
+
+void 
+cl_CC2530_usart::reset(void)
+{
+  stopBitLevel = 1;
+  startBitLevel = 0;
+  TXD = stopBitLevel;
+  RXD = stopBitLevel;
+  BaudFactor = 1.0/16;
+
+  parity = false;
+  mode = 0;
+  slave = 0;
+  TickCountForBaud = 0;
+  RX = 0;
+  TX = 0;
+  bitRxCnt = 0;
+  bitTxCnt = 0;
+  BitNumber = 0;
+  StopBits = 0;
+  queue = 0;
+  baud_m = 0;
+  baud_e = 0;
+  UsartID = 0;
+  BaudFactor = 0;
+  BaudRate = 0;
 }
 
 void
@@ -125,6 +155,7 @@ cl_CC2530_usart::tick(int cycles)
 	    }
 	}
     }
+  return(0);
 }
 
 void 
@@ -134,7 +165,7 @@ cl_CC2530_usart::SCK(void)
   //slave->ExtSCK();
 }
 
-bool 
+void 
 cl_CC2530_usart::ExtSCK(void)
 {
   if ((mode == 0) && (slave == 1))
@@ -233,13 +264,13 @@ cl_CC2530_usart::Shift_in(t_mem& Rxreg, bool& IPin)
 		{
 		  cell_uXcsr->set_bit1(bmErr);//Parity error
 #ifdef USARTINFO
-		  fprintf(stderr, "Parity Error!\n", Rxreg);
+		  fprintf(stderr, "Parity Error!\n");
 #endif
 		}
 	      else
 		{
 #ifdef USARTINFO
-		fprintf(stderr, "Parity OK!\n", Rxreg);
+		fprintf(stderr, "Parity OK!\n");
 #endif
 		}
 	    }
@@ -249,7 +280,7 @@ cl_CC2530_usart::Shift_in(t_mem& Rxreg, bool& IPin)
 		{
 		  cell_uXcsr->set_bit1(bmFe);//Framing error
 #ifdef USARTINFO
-		  fprintf(stderr, "Framing Error!\n", Rxreg);
+		  fprintf(stderr, "Framing Error!\n");
 #endif
 		}
 	    }
@@ -268,6 +299,10 @@ cl_CC2530_usart::Shift_in(t_mem& Rxreg, bool& IPin)
 	  cell_uXcsr->set_bit1(bmRx_byte); //signals end rx
 	  //generate receive interrupt
 	  cell_tcon->set_bit1(bmURXxIF);
+	  if (UsartID == 0)
+	    inform_partners(EV_URX0, 0);
+	  else
+	    inform_partners(EV_URX1, 0);
 	  cell_uXcsr->set_bit0(bmActive);//no longer active
 	  RX = 0;
 	  bitRxCnt = 0;
@@ -333,7 +368,10 @@ cl_CC2530_usart::Shift_out(t_mem& Txreg, bool& OPin)
 	  cell_uXcsr->set_bit1(bmTx_byte);//signals end of tx
 	  //generate end of tx interrupt request
 	  cell_ircon2->set_bit1(bmUTXxIF);
-
+	  if (UsartID == 0)
+	    inform_partners(EV_UTX0, 0);
+	  else
+	    inform_partners(EV_UTX1, 0);
 	  if (queue == 1)
 	    {
 	      TX = 1;
@@ -488,6 +526,7 @@ cl_CC2530_usart::read(class cl_memory_cell *cell)
       cell_uXcsr->set_bit0(bmErr);//clear parity error bit 
       cell_uXcsr->set_bit0(bmFe);//clear Framing error bit
     }
+  return (cell->get()); 
 }
 
 void
@@ -519,7 +558,7 @@ cl_CC2530_usart::print_info()
   fprintf(stderr," %s******************\n", modes[mod]);
   fprintf(stderr,"%s Parity: %s\n",((cell_uXucr->get() & bmD9) == 0)?"Odd":"Even", 
 	  (BitNumber == 9)?"enabled":"disabled");
-  fprintf(stderr,"BaudRate: %g bits/s\tCC2530 Crystal: %g Hz", BaudRate, CC2530xtal);
+  fprintf(stderr,"BaudRate: %g bits/s\tCC2530 Crystal: %d Hz", BaudRate, CC2530xtal);
   fprintf(stderr,"\n*********************************");
   fprintf(stderr,"****************************************\n\n");
 }

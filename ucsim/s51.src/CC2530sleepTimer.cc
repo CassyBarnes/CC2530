@@ -91,7 +91,7 @@ cl_CC2530_sleep_timer::STtick(int cycles)
     }
 }
 
-double
+ulong
 cl_CC2530_sleep_timer::get_rtime(void)
 {  
   return(MemElapsedTime + systemTicks/freq);
